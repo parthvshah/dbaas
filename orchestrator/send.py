@@ -34,7 +34,7 @@ class RpcClient(object):
 
     def __init__(self,q_name):
         self.connection = pika.BlockingConnection(
-            pika.ConnectionParameters(host='localhost'))
+            pika.ConnectionParameters(host='rmq'))
         self.queue_name=q_name
 
         self.channel = self.connection.channel()
@@ -61,10 +61,10 @@ class RpcClient(object):
                 reply_to=self.callback_queue,
                 correlation_id=self.corr_id,
             ),
-            body=json.dumps(contents))
+            body=json.dumps(content))
         while self.response is None:
             self.connection.process_data_events()
-        return int(self.response)
+        return (self.response)
 
 
 # db_rpc = RpcClient()

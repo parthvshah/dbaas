@@ -20,10 +20,10 @@ def send_to_master():
     db_rpc = RpcClient("writeQ");
 
     print(" [x] Requesting to master")
-    response = db_rpc.call(contents)
+    response = db_rpc.call(content)
     #obtain results
     print(" [.] Got %r" % response)
-    return jsonify("response_json",response),201  #send it back to user/rides microservice
+    return ("response_json",response),201  #send it back to user/rides microservice #jsonify
 
 @app.route('/api/v1/db/read', methods = ['POST'])
 def send_to_slaves():
@@ -37,7 +37,7 @@ def send_to_slaves():
     response = db_rpc.call(contents) #call sends it into the q
     #obtain results
     print(" [.] Got %r" % response)
-    return jsonify("response_json",response),201 #send it back to user/rides microservice
+    return ("response_json",response),201 #send it back to user/rides microservice #jsonify
 if __name__ == '__main__':
-    app.run()
-    # app.run(debug=True, host='0.0.0.0')
+    #app.run()
+    app.run(debug=True, host='0.0.0.0')
