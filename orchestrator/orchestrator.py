@@ -1,42 +1,14 @@
 from flask import Flask
 from flask import request,jsonify
+from send import RpcClient #send_to_writeQ,send_to_readQ,     # defined in this dir
 import pika
 import sys
 app = Flask(__name__)
 
 #!/usr/bin/env python
-@app.route('/')
+@app.route('/')   #demo function
 def hello():
     return "Hello World!"
-def send_to_writeQ(contents):
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host='rmq'))
-    channel = connection.channel()
-
-    channel.queue_declare(queue='writeQ', durable=True)
-    channel.basic_publish(exchange='',
-                        routing_key='writeQ',
-                        body=json.dumps(contents),
-                        properties=pika.BasicProperties(
-                            delivery_mode = 2, # make message persistent
-                        ))
-    print("Sent to writeQ")
-    connection.close()
-def send_to_readQ(contents):
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host='rmq'))
-    channel = connection.channel()
-
-    channel.queue_declare(queue='readQ', durable=True)
-    channel.basic_publish(exchange='',
-                        routing_key='readQ',
-                        body=json.dumps(contents),
-                        properties=pika.BasicProperties(
-                            delivery_mode = 2, # make message persistent
-                        ))
-    print(" Sent to readQ" %)
-    connection.close()
-
-
-
 @app.route('/api/v1/db/write',methods = ['POST'])
 def send_to_master():
     if not request.json:
@@ -44,28 +16,28 @@ def send_to_master():
     print (request.is_json)
     content = request.get_json()
     print (content)
-    send_to_writeQ(contents)
     #send contents fo rabbitmq(pika)
+    db_rpc = RpcClient("writeQ");
+
+    print(" [x] Requesting to master")
+    response = db_rpc.call(contents)
     #obtain results
-    #return json obj
-    sample_json=[
-    {
-        'id':1,
-        'name': "hello"
-    }
-    ]
-    return jsonify("sample_json",sample_json),201
+    print(" [.] Got %r" % response)
+    return jsonify("response_json",response),201  #send it back to user/rides microservice
 
 @app.route('/api/v1/db/read', methods = ['POST'])
 def send_to_slaves():
     print (request.is_json)
     content = request.get_json()
     print (content)
-    send_to_readQ(contents)
-    #send contents fo rabbitmq(pika)
+    # send to readQ(contents)
+    db_rpc = RpcClient("readQ");
+
+    print(" [x] Requesting to slave")
+    response = db_rpc.call(contents) #call sends it into the q
     #obtain results
-    #return json obj
-    return jsonify("sample_json",sample_json)
+    print(" [.] Got %r" % response)
+    return jsonify("response_json",response),201 #send it back to user/rides microservice
 if __name__ == '__main__':
     app.run()
     # app.run(debug=True, host='0.0.0.0')
