@@ -23,8 +23,14 @@ channel.queue_declare(queue='rpc_queue')
 
 def readData(req):
     req = json.loads(req)
-    model = req['model']
-    parameters = req['parameters']
+    try:
+        model = req['model']
+    except KeyError:
+        model = ''
+    try:
+        parameters = req['parameters']
+    except KeyError:
+        parameters = {}
 
     if (model):
         if (model == "Ride"):
@@ -37,9 +43,9 @@ def readData(req):
         except:
             return json.dumps({ "success": False, "message": "Find error." })
 
+        print(" [.] Accessed records")
         return dumps(results)
         
-
     else:
         return json.dumps({ "success": False, "message": "Model cannot be blank." })
 

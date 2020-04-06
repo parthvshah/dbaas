@@ -1,30 +1,50 @@
+#!/usr/bin/env python
+import pika
 import pymongo
 from pymongo import MongoClient
-from flask import jsonify
+import json
+from bson.json_util import dumps
 
+# Mongo setup
 client = MongoClient('mongodb://localhost:27017')
-db = client.richu_RideShare_dev
+db = client.ride_share_db_dev
 Ride = db.rides
 User = db.users
 Model = db.users
 
+# Pika setup
+connection = pika.BlockingConnection(
+    pika.ConnectionParameters(host='localhost'))
+
+channel = connection.channel()
+
+channel.queue_declare(queue='rpc_queue')
+
 def writeData(req):
-    # need to fill in
-    model = req.body.model
-    parameters = req.body.parameters
-    operation = req.body.operation
-    query = req.body.query
+    req = json.loads(req)
+    try:
+        model = req['model']
+    except KeyError:
+        model = ''
+    try:
+        parameters = req['parameters']
+    except KeyError:
+        parameters = {}
+    try:
+        operation = req['operation']
+    except KeyError:
+        operation = ''
+    try:
+        query = req['query']
+    except KeyError:
+        query = {}
 
-    if(model and operation): #RICHA WROTE THIS
+    if(model and operation):
         if(not parameters):
-            #send res 400 status
-            return jsonify({ "success": False, "message": "Parameters cannot be blank." })
+            return json.dumps({ "success": False, "message": "Parameters cannot be blank." })
 
-        if (operation == "update" not query):
-            # send res 400 status
-            return jsonify({ "success": False, "message": "Query cannot be blank." })
-
-
+        if (operation == "update" and not query):
+            return json.dumps({ "success": False, "message": "Query cannot be blank." })
 
         if (model):
             if (model == "Ride"):
@@ -32,44 +52,45 @@ def writeData(req):
             if(model == "User"):
                 Model = User
         
+        # Insert
         if(operation == "insert"):
             try:
-                insertedID = Model.insert_one(jsonify(parameters)).inserted_id
-                print("New document inserted " + insertedID)
+                insertedID = Model.insert_one(parameters).inserted_id
             except:
-                return jsonify({ "success": False, "message": "Insert one error." })
-
+                return json.dumps({ "success": False, "message": "Insert one error." })
+        
+        # Delete
         if(operation == "delete"):
             try:
-                Model.find_one_and_delete(jsonify(parameters))
+                Model.find_one_and_delete(parameters)
             except:
-                return jsonify({ "success": False, "message": "Find one and delete error." })
-  
+                return json.dumps({ "success": False, "message": "Find one and delete error." })
+        
+        # Update
         if(operation == "update"):
             try:
-                Model.find_one_and_update(jsonify(query), jsonify(parameters), jsonify({new: "true"}))
+                Model.find_one_and_update(query, parameters)
             except:
-                return jsonify({ "success": False, "message": "Find one and update error." })
+                return json.dumps({ "success": False, "message": "Find one and update error." })
                 
-        print("DB write done")
-        # return res 200 status
-        return jsonify({ "success": True, "message": "DB write done" })
-
-        else:
-        # return res 500 status 
-        return jsonify({ "success": False, "message": "Error: Server error." })
+        return json.dumps({ "success": True, "message": "DB write done" })
 
     else:
-        # return res 400 status 
-        return jsonify({ "success": False, "message": "Error: Model and operation cannot be blank." })
-        
-        # try:
-        #     results = Model.find(parameters)
-        # except:
-        #     return jsonify({ "success": False, "message": "Find error." })
+        return json.dumps({ "success": False, "message": "Error: Model and operation cannot be blank." })
 
-        # return jsonify(results)
-        
-    # else:
-        # send res 400 status
-        # return jsonify({ "success": False, "message": "Model cannot be blank." })
+def on_request(ch, method, props, body):
+    print(" [.] Processing request")
+    response = writeData(body)
+
+    ch.basic_publish(exchange='',
+                     routing_key=props.reply_to,
+                     properties=pika.BasicProperties(correlation_id = props.correlation_id),
+                     body=response)
+    ch.basic_ack(delivery_tag=method.delivery_tag)
+
+if __name__=="__main__":
+    channel.basic_qos(prefetch_count=1)
+    channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
+
+    print(" [x] Awaiting requests")
+    channel.start_consuming()
