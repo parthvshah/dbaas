@@ -6,7 +6,8 @@ import json
 from bson.json_util import dumps
 
 # Mongo setup
-client = MongoClient('mongodb://localhost:27017')
+#client = MongoClient('mongodb://localhost:27017')
+client = MongoClient('master_mongo')
 db = client.ride_share_db_dev
 Ride = db.rides
 User = db.users
@@ -18,8 +19,8 @@ connection = pika.BlockingConnection(
 
 channel = connection.channel()
 
-channel.queue_declare(queue='rpc_queue')
-
+# channel.queue_declare(queue='rpc_queue')
+channel.queue_declare(queue='writeQ')
 def writeData(req):
     req = json.loads(req)
     try:
@@ -90,7 +91,7 @@ def on_request(ch, method, props, body):
 
 if __name__=="__main__":
     channel.basic_qos(prefetch_count=1)
-    channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
-
+    # channel.basic_consume(queue='rpc_queue', on_message_callback=on_request)
+    channel.basic_consume(queue='writeQ', on_message_callback=on_request)
     print(" [x] Awaiting requests")
     channel.start_consuming()
