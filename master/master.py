@@ -14,7 +14,7 @@ Model = db.users
 
 # Pika setup
 connection = pika.BlockingConnection(
-    pika.ConnectionParameters(host='localhost'))
+    pika.ConnectionParameters(host='rmq'))
 
 channel = connection.channel()
 

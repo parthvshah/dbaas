@@ -18,23 +18,40 @@ services:
 
   
   slave:
-      build:
+    container_name: slave
+    build:
           context: ./slave
           dockerfile: Dockerfile
-      command: sh -c "sleep 5 && python slave.py"
-      volumes:
-      - ./slave:/code
-      restart: on-failure
-    rmq:
-      image: rabbitmq:3.8.3-alpine  
+    command: sh -c "sleep 5 && python slave.py"
+    volumes:
+        - ./slave:/code
+    links:
+        - "slave_mongo:mongo"
+    depends_on:
+        - rmq
+    restart: on-failure
+
+  slave_mongo:
+    container_name: slave_mongo
+    image: mongo
+    restart: always
+
 
   master:
-      build:
+    container_name: master
+    build:
           context: ./master
           dockerfile: Dockerfile
-      command: sh -c "sleep 5 && python master.py"
-      volumes:
-      - ./master:/code
-      restart: on-failure
-    rmq:
-      image: rabbitmq:3.8.3-alpine  
+    command: sh -c "sleep 5 && python master.py"
+    volumes:
+          - ./master:/code
+    links:
+        - "master_mongo:mongo"
+    depends_on:
+        - rmq
+    restart: on-failure
+
+  master_mongo:
+    container_name: master_mongo
+    image: mongo
+    restart: always
