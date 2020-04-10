@@ -2,13 +2,14 @@ from flask import Flask
 from flask import request,jsonify
 from send import RpcClient #send_to_writeQ,send_to_readQ,     # defined in this dir
 import pika
+import json
 import sys
 app = Flask(__name__)
 
 #!/usr/bin/env python
 @app.route('/')   #demo function
 def hello():
-    return "Hello World!"
+    return "Hello World! How are you"
 @app.route('/api/v1/db/write',methods = ['POST'])
 def send_to_master():
     if not request.json:
@@ -17,13 +18,15 @@ def send_to_master():
     content = request.get_json()
     print (content)
     #send contents fo rabbitmq(pika)
+    print(" [x] Requesting to master")
     db_rpc = RpcClient("writeQ");
 
     print(" [x] Requesting to master")
     response = db_rpc.call(content)
+    response=json.dumps(response.decode("utf-8"))
     #obtain results
     print(" [.] Got %r" % response)
-    return ("response_json",response),201  #send it back to user/rides microservice #jsonify
+    return jsonify("response_json",response),201  #send it back to user/rides microservice #jsonify
 
 @app.route('/api/v1/db/read', methods = ['POST'])
 def send_to_slaves():

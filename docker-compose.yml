@@ -9,7 +9,7 @@ services:
     ports:
       - "5000:5000"
     volumes:
-        - .:/code
+        - ./orchestrator:/app
     depends_on:
         - rmq
     restart: on-failure

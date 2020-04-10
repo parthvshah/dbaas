@@ -54,6 +54,7 @@ class RpcClient(object):
     def call(self, content):
         self.response = None
         self.corr_id = str(uuid.uuid4()) #unique id
+        print("publishing to",self.queue_name)
         self.channel.basic_publish(
             exchange='',
             routing_key=self.queue_name,
