@@ -1,0 +1,19 @@
+version: '3.7'
+
+services:
+  orchestrator:
+    container_name: orch
+    build:
+        context: ./orchestrator
+        dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+        - ./orchestrator:/app
+    depends_on:
+        - rmq
+    restart: on-failure
+  rmq:
+    image: rabbitmq:3.8.3-alpine    
+
+  
