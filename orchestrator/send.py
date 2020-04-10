@@ -34,7 +34,7 @@ class RpcClient(object):
 
     def __init__(self,q_name):
         self.connection = pika.BlockingConnection(
-            pika.ConnectionParameters(host='orchestrator'))
+            pika.ConnectionParameters(host='rmq'))
         self.queue_name=q_name
 
         self.channel = self.connection.channel()
