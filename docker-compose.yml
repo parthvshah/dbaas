@@ -12,8 +12,6 @@ services:
       - "5000:5000"
     volumes:
         - ./orchestrator:/app
-    links:
-    - rmq
     depends_on:
         - rmq
     restart: on-failure
@@ -23,12 +21,9 @@ services:
     build:
           context: ./slave
           dockerfile: Dockerfile
-    command: sh -c "sleep 5 && python slave.py"
+    command: sh -c "sleep 15 && python slave.py"
     volumes:
         - ./slave:/slave
-    links:
-    - rmq
-    - slave_mongo
     depends_on:
         - rmq
         - slave_mongo
@@ -44,12 +39,9 @@ services:
     build:
           context: ./master
           dockerfile: Dockerfile
-    command: sh -c "sleep 5 && python master.py"
+    command: sh -c "sleep 15 && python master.py"
     volumes:
           - ./master:/master
-    links:
-    - rmq
-    - master_mongo
     depends_on:
         - rmq
         - master_mongo
