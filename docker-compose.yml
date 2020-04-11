@@ -8,6 +8,7 @@ services:
     build:
         context: ./orchestrator
         dockerfile: Dockerfile
+    command: sh -c "sleep 15 && python orchestrator.py"
     ports:
       - "5000:5000"
     volumes:

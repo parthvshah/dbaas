@@ -9,7 +9,7 @@ RUN pip install -r requirements.txt
 
 # COPY . /app
 
-ENTRYPOINT [ "python" ]
+# ENTRYPOINT [ "python" ]
 
-CMD [ "orchestrator.py" ]
+# CMD [ "orchestrator.py" ]
 

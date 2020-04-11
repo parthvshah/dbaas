@@ -23,10 +23,10 @@ def send_to_master():
 
     print(" [x] Requesting to master")
     response = db_rpc.call(content)
-    response=json.dumps(response.decode("utf-8"))
+    response=json.loads(response)
     #obtain results
     print(" [.] Got %r" % response)
-    return jsonify("response_json",response),201  #send it back to user/rides microservice #jsonify
+    return jsonify(response),201  #send it back to user/rides microservice #jsonify
 
 @app.route('/api/v1/db/read', methods = ['POST'])
 def send_to_slaves():
