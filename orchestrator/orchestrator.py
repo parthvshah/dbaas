@@ -37,7 +37,7 @@ def send_to_slaves():
     db_rpc = RpcClient("readQ");
 
     print(" [x] Requesting to slave")
-    response = db_rpc.call(contents) #call sends it into the q
+    response = db_rpc.call(content) #call sends it into the q
     #obtain results
     print(" [.] Got %r" % response)
     return ("response_json",response),201 #send it back to user/rides microservice #jsonify
