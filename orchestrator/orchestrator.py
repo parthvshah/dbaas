@@ -6,6 +6,8 @@ import json
 import sys
 app = Flask(__name__)
 
+gReadCount = 0
+
 #!/usr/bin/env python
 @app.route('/')   #demo function
 def hello():
@@ -40,7 +42,16 @@ def send_to_slaves():
     response = db_rpc.call(content) #call sends it into the q
     #obtain results
     print(" [.] Got %r" % response)
+
+    gReadCount += 1
+
     return ("response_json",response),201 #send it back to user/rides microservice #jsonify
+
+@app.route('/api/v1/orch/readcount', methods=['GET'])
+def get_read_count():
+    print("Count:", gReadCount)
+    return jsonify([gReadCount]),200
+
 if __name__ == '__main__':
     #app.run()
     app.run(debug=True, host='0.0.0.0')
