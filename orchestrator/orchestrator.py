@@ -50,7 +50,9 @@ def send_to_slaves():
 @app.route('/api/v1/orch/readcount', methods=['GET'])
 def get_read_count():
     print("Count:", gReadCount)
-    return jsonify([gReadCount]),200
+    gReadCountReturn = gReadCount
+    gReadCount = 0
+    return jsonify([gReadCountReturn]),200
 
 if __name__ == '__main__':
     #app.run()
