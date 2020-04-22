@@ -25,10 +25,9 @@ def spawn_pair(number):
         image = client.images.build(path='/master_slave')
         slave_container = client.containers.run(image[0],
                                         # name='new_master_slave',
-                                        volumes={'/home/parth/Documents/College/CC/Project/Database-as-a-Service/master_slave': {'bind': '/slave'}},
+                                        volumes={'/home/parth/Documents/College/CC/Project/Database-as-a-Service/master_slave': {'bind': '/master_slave'}},
                                         network='database-as-a-service_default',
-                                        links={'d5220b32036d': 'rmq', mongo_container_id:'mongo'},
-                                        working_dir='/slave',
+                                        links={'rmq_host': 'rmq', mongo_container_id:'mongo'},
                                         restart_policy={"Name": "on-failure", "MaximumRetryCount": 5},
                                         command='sh -c "sleep 15 && python -u master_slave.py slave"',
                                         detach=True)

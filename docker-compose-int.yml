@@ -2,7 +2,7 @@ version: '3.7'
 
 services:
   rmq:
-    container_name: rmq
+    container_name: rmq_host
     image: rabbitmq:3.8.3-alpine
 
   orchestrator:
