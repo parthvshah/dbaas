@@ -42,6 +42,7 @@ def send_to_slaves():
     response = db_rpc.call(content) #call sends it into the q
     #obtain results
     print(" [.] Got %r" % response)
+    global gReadCount
 
     gReadCount += 1
 
@@ -49,6 +50,7 @@ def send_to_slaves():
 
 @app.route('/api/v1/orch/readcount', methods=['GET'])
 def get_read_count():
+    global gReadCount
     print("Count:", gReadCount)
     gReadCountReturn = gReadCount
     gReadCount = 0
