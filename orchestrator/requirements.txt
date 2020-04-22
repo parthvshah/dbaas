@@ -1,3 +1,5 @@
 ipython
 pika
 Flask
+docker
+Flask-Script

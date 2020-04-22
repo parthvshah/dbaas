@@ -1,17 +1,74 @@
-from flask import Flask
-from flask import request,jsonify
+from flask import Flask, request, jsonify
+from flask_script import Manager, Server
 from send import RpcClient #send_to_writeQ,send_to_readQ,     # defined in this dir
 import pika
 import json
 import sys
-app = Flask(__name__)
 
-gReadCount = 0
+import docker
+import time
+
+client = docker.from_env()
+
+def spawn_pair(number):
+    ids = []
+    for i in range(number):
+        mongo_container = client.containers.run('mongo',
+                                            #name='new_mongo',
+                                            network='database-as-a-service_default',
+                                            detach=True)
+        
+        mongo_container_id = mongo_container.id
+
+        #TODO: Figure out database copy here
+
+        image = client.images.build(path='/master_slave')
+        slave_container = client.containers.run(image[0],
+                                        # name='new_master_slave',
+                                        volumes={'/home/parth/Documents/College/CC/Project/Database-as-a-Service/master_slave': {'bind': '/slave'}},
+                                        network='database-as-a-service_default',
+                                        links={'d5220b32036d': 'rmq', mongo_container_id:'mongo'},
+                                        working_dir='/slave',
+                                        restart_policy={"Name": "on-failure", "MaximumRetryCount": 5},
+                                        command='sh -c "sleep 15 && python -u master_slave.py slave"',
+                                        detach=True)
+        ids.append((mongo_container_id, slave_container.id))
+    
+    return ids
+
+
+def init_scale_watch():
+    cycle = 0
+    while True:
+        cycle += 1
+        print(" [x] Spawn watch cycle", cycle)
+
+        # Add db call here to get cur count
+        count = 25
+
+        to_spawn = count // 20
+        new_list = spawn_pair(to_spawn)
+        print(" [x] Spawned", to_spawn, "contianers with IDs", new_list)   
+
+        # Add db call here to set new list of contianers (append)
+
+        time.sleep(120)
+        count = 0
+
+class CustomServer(Server):
+    def __call__(self, app, *args, **kwargs):
+        init_scale_watch()
+        return Server.__call__(self, app, *args, **kwargs)
+
+app = Flask(__name__)
+manager = Manager(app)
+manager.add_command('runserver', CustomServer())
 
 #!/usr/bin/env python
 @app.route('/')   #demo function
 def hello():
-    return "Hello World! How are you"
+    return "Hello World! How are you?"
+
 @app.route('/api/v1/db/write',methods = ['POST'])
 def send_to_master():
     if not request.json:
@@ -44,18 +101,9 @@ def send_to_slaves():
     print(" [.] Got %r" % response)
     global gReadCount
 
-    gReadCount += 1
-
+    # add db call to update count
     return ("response_json",response),201 #send it back to user/rides microservice #jsonify
 
-@app.route('/api/v1/orch/readcount', methods=['GET'])
-def get_read_count():
-    global gReadCount
-    print("Count:", gReadCount)
-    gReadCountReturn = gReadCount
-    gReadCount = 0
-    return jsonify([gReadCountReturn]),200
-
 if __name__ == '__main__':
-    #app.run()
-    app.run(debug=True, host='0.0.0.0')
+    # app.run(debug=True, host='0.0.0.0')
+    manager.run()

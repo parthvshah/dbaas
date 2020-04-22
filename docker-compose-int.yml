@@ -2,22 +2,28 @@ version: '3.7'
 
 services:
   rmq:
+    container_name: rmq
     image: rabbitmq:3.8.3-alpine
 
   orchestrator:
+    container_name: orch
     build:
         context: ./orchestrator
         dockerfile: Dockerfile
-    command: sh -c "sleep 15 && python -u orchestrator.py"
+    command: sh -c "sleep 15 && python -u orchestrator.py runserver"
     ports:
       - "5000:5000"
     volumes:
         - ./orchestrator:/app
+        - ./master_slave:/master_slave
+        - "/var/run/docker.sock:/var/run/docker.sock"
+    privileged: true
     depends_on:
         - rmq
     restart: on-failure
 
   slave:
+    container_name: slave
     build:
           context: ./master_slave
           dockerfile: Dockerfile
@@ -30,6 +36,7 @@ services:
     restart: on-failure
 
   slave_mongo:
+    container_name: slave_mongo
     image: mongo
     restart: always
 
@@ -48,6 +55,7 @@ services:
     restart: on-failure
 
   master_mongo:
+    container_name: master_mongo
     image: mongo
     restart: always
   
