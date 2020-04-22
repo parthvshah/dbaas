@@ -99,7 +99,6 @@ def send_to_slaves():
     response = db_rpc.call(content) #call sends it into the q
     #obtain results
     print(" [.] Got %r" % response)
-    global gReadCount
 
     # add db call to update count
     return ("response_json",response),201 #send it back to user/rides microservice #jsonify
