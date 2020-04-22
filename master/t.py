@@ -10,6 +10,12 @@ import time
 
 from pymongo import MongoClient
 
+myclient = MongoClient('orch_mongo')
+# db = myclient["dbaas"]
+
+
+
+
 client = docker.from_env()
 
 def spawn_pair(number):
@@ -39,32 +45,35 @@ def spawn_pair(number):
 
 
 def init_scale_watch():
-    myclient = MongoClient("orch_mongo")    
-    db = myclient.orch
-    counts_col = db.counts
-    containers_col = db.containers
+
+
     cycle = 0
+
     while True:
         cycle += 1
         print(" [x] Spawn watch cycle", cycle)
+
         # Add db call here to get cur count
         # assuming collection is called counts
+        count_col = myclient.dbaas.counts
         # check if it returns a key value pair
+        count = count_col.find()
+        # assuming key name is count
+        inc = { "$inc": {"count": 1}}
+        count_col.update(count, inc)
 
         # count = 25
-        count = counts_col.find()
-        
 
         to_spawn = count // 20
         new_list = spawn_pair(to_spawn)
         print(" [x] Spawned", to_spawn, "contianers with IDs", new_list)   
 
         # Add db call here to set new list of contianers (append)
-
+        container_col =  myclient.db.containers
 
         setz = {"$set:" {"count": 0}}
         time.sleep(120)
-        counts_col.update(count, setz)
+        count.col.update(count, setz)
 
 class CustomServer(Server):
     def __call__(self, app, *args, **kwargs):
@@ -112,9 +121,6 @@ def send_to_slaves():
     print(" [.] Got %r" % response)
 
     # add db call to update count
-    count = counts_col.find()
-    inc = { "$inc": {"count": 1}}
-    counts_col.update(count, inc)
     return ("response_json",response),201 #send it back to user/rides microservice #jsonify
 
 if __name__ == '__main__':
