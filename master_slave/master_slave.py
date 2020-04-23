@@ -116,6 +116,7 @@ def readData(req):
 def on_request_read(ch, method, props, body):
     print(" [.] Processing request")
     response = readData(body)
+    ch.queue_declare(queue='responseQ', durable=True)
 
     # ch.basic_publish(exchange='',
     #                  routing_key=props.reply_to,
@@ -123,7 +124,7 @@ def on_request_read(ch, method, props, body):
     #                  body=response)
     ch.basic_publish(exchange='',
                         routing_key='responseQ',
-                        body=json.dumps(contents),
+                        body=json.dumps(response),
                         properties=pika.BasicProperties(
                             delivery_mode = 2, # make message persistent
                         ))
@@ -144,7 +145,7 @@ if(mode=='master'):
     User = db.users
     Model = db.users
 
-    channel.queue_declare(queue='writeQ')
+    channel.queue_declare(queue='writeQ',durable=True)
     channel.exchange_declare(exchange='sync', exchange_type='fanout')
     channel.basic_qos(prefetch_count=1)
     channel.basic_consume(queue='writeQ', on_message_callback=on_request_write)
@@ -160,8 +161,7 @@ if(mode=='slave'):
     User = db.users
     Model = db.users
     #note slaves have to cater to readQ.. sync with master .. and push data to responseq
-    channel.queue_declare(queue='readQ')
-    channel.queue_declare(queue='responseQ', durable=True)
+    channel.queue_declare(queue='readQ',durable=True)
     channel.exchange_declare(exchange='sync', exchange_type='fanout')
     channel.basic_qos(prefetch_count=1)
     channel.basic_consume(queue='readQ', on_message_callback=on_request_read)

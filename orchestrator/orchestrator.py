@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_script import Manager, Server
-from send import RpcClient ,send_to_writeQ,send_to_readQ,receive_from_responseQ     # defined in this dir
+from send import RpcClient ,send_to_writeQ,send_to_readQ     # defined in this dir
 import pika
 import json
 import sys
@@ -79,6 +79,7 @@ def send_to_master():
     print (request.is_json)
     content = request.get_json()
     print (content)
+    
     #send contents fo rabbitmq(pika)
     print(" [x] Requesting to master")
     # db_rpc = RpcClient("writeQ");
@@ -87,6 +88,7 @@ def send_to_master():
     # response = db_rpc.call(content)
     send_to_writeQ(content)
     print("[x] sent to writeQ")
+    return jsonify({"sent":"master"}),201
     # response=None #set this value inside receive_from_responseQ
     # response=receive_from_responseQ()
     # response=json.loads(response) #convert to json
@@ -106,18 +108,36 @@ def send_to_slaves():
     # response = db_rpc.call(content) #call sends it into the q
     # #obtain results
     # print(" [.] Got %r" % response)
-    send_to_readQ(content)
+    connection = pika.BlockingConnection(pika.ConnectionParameters(host='rmq'))
+    channel = connection.channel()
+    send_to_readQ(content,channel)
+    channel.queue_declare(queue='responseQ', durable=True)
+    # channel.basic_qos(prefetch_count=1)
+    channel.basic_consume(queue='responseQ', on_message_callback=set_response_to_global_var)
+    channel.start_consuming()
+    print(' [*] Waiting for messages from responseQ. To exit press CTRL+C')
     response=None #set this value inside receive_from_responseQ
-    response=receive_from_responseQ()
-    response=json.loads(response) #convert to json      # note responseQ as db data
+    #response=receive_from_responseQ()
+     #convert to json      # note responseQ as db data
     if response is not None:
+        response=json.loads(response)
         print(" [.] Got %r" % response)
         return jsonify(response),201  #send it back to user/rides microservice #jsonify
     else :
+        return jsonify({"db":"empty"})
         print("[x] No response received from responseQ")
     # add db call to update count
     #send it back to user/rides microservice #jsonify
 
+def set_response_to_global_var(ch, method, properties, body):
+        print(" [x] Received from responseQ ")
+        # time.sleep(body.count(b'.'))
+        print(" [x] Done")
+        global response
+        response=body
+        print("[x] set response body")
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+
 if __name__ == '__main__':
-    # app.run(debug=True, host='0.0.0.0')
-    manager.run(host='0.0.0.0')
+    app.run(debug=True, host='0.0.0.0')
+    # manager.run(host='0.0.0.0')

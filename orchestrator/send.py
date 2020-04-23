@@ -4,7 +4,7 @@ import json
 def send_to_writeQ(contents):
     connection = pika.BlockingConnection(pika.ConnectionParameters(host='rmq'))
     channel = connection.channel()
-    channel.queue_declare(queue='writeQ', durable=True)
+    channel.queue_declare(queue='writeQ')#, durable=True)
 
     
     channel.basic_publish(exchange='',
@@ -16,9 +16,9 @@ def send_to_writeQ(contents):
     print("Sent to writeQ")
     connection.close()
     
-def send_to_readQ(contents):
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host='rmq'))
-    channel = connection.channel()
+def send_to_readQ(contents,channel):
+    
+    
     channel.queue_declare(queue='readQ', durable=True)
     
     channel.basic_publish(exchange='',
@@ -28,28 +28,18 @@ def send_to_readQ(contents):
                             delivery_mode = 2, # make message persistent
                         ))
     print("Sent to readQ")
-    connection.close()
-def receive_from_responseQ():
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host='rmq'))
-    channel = connection.channel()
+# def receive_from_responseQ():
+    
 
-    channel.queue_declare(queue='task_queue', durable=True)
-    print(' [*] Waiting for messages from responseQ. To exit press CTRL+C')
-
-
-    def set_response_to_global_var(ch, method, properties, body):
-        print(" [x] Received from responseQ%r" % body)
+#     channel.start_consuming()
+def set_response_to_global_var(ch, method, properties, body):
+        print(" [x] Received from responseQ")
         # time.sleep(body.count(b'.'))
         print(" [x] Done")
         global response
         response=body
+        print("[x] set response body")
         ch.basic_ack(delivery_tag=method.delivery_tag)
-
-
-    channel.basic_qos(prefetch_count=1)
-    channel.basic_consume(queue='responseQ', on_message_callback=set_response_to_global_var)
-
-    channel.start_consuming()
 
 
 
