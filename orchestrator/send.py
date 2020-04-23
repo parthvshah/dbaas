@@ -4,8 +4,9 @@ import json
 def send_to_writeQ(contents):
     connection = pika.BlockingConnection(pika.ConnectionParameters(host='rmq'))
     channel = connection.channel()
-
     channel.queue_declare(queue='writeQ', durable=True)
+
+    
     channel.basic_publish(exchange='',
                         routing_key='writeQ',
                         body=json.dumps(contents),
@@ -14,11 +15,12 @@ def send_to_writeQ(contents):
                         ))
     print("Sent to writeQ")
     connection.close()
+    
 def send_to_readQ(contents):
     connection = pika.BlockingConnection(pika.ConnectionParameters(host='rmq'))
     channel = connection.channel()
-
     channel.queue_declare(queue='readQ', durable=True)
+    
     channel.basic_publish(exchange='',
                         routing_key='readQ',
                         body=json.dumps(contents),
@@ -32,7 +34,7 @@ def receive_from_responseQ():
     channel = connection.channel()
 
     channel.queue_declare(queue='task_queue', durable=True)
-    print(' [*] Waiting for messages. To exit press CTRL+C')
+    print(' [*] Waiting for messages from responseQ. To exit press CTRL+C')
 
 
     def set_response_to_global_var(ch, method, properties, body):

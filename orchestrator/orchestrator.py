@@ -109,9 +109,10 @@ def send_to_slaves():
     if response is not None:
         print(" [.] Got %r" % response)
         return jsonify(response),201  #send it back to user/rides microservice #jsonify
-    print("[x] No response received from responseQ)
+    else 
+        print("[x] No response received from responseQ)
     # add db call to update count
-    return (response),201 #send it back to user/rides microservice #jsonify
+    #send it back to user/rides microservice #jsonify
 
 if __name__ == '__main__':
     # app.run(debug=True, host='0.0.0.0')

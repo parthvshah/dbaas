@@ -76,14 +76,14 @@ def on_request_write(ch, method, props, body):
     print(" [.] Processing request...on_req_write")
     response = writeData(body)
 
-    ch.basic_publish(exchange='',
-                     routing_key=props.reply_to,
-                     properties=pika.BasicProperties(correlation_id = props.correlation_id),
-                     body=response)
+    # ch.basic_publish(exchange='',
+    #                  routing_key=props.reply_to,
+    #                  properties=pika.BasicProperties(correlation_id = props.correlation_id),
+    #                  body=response)
     ch.basic_ack(delivery_tag=method.delivery_tag)
     #send to sync once
     ch.basic_publish(exchange='sync', routing_key='', body=body) #send to sync exchange
-    print(" [x] Sent %r" % response)
+    print(" [x] Sent to sync--%r" % body)
 
 def readData(req):
     req = json.loads(req)
@@ -117,10 +117,17 @@ def on_request_read(ch, method, props, body):
     print(" [.] Processing request")
     response = readData(body)
 
+    # ch.basic_publish(exchange='',
+    #                  routing_key=props.reply_to,
+    #                  properties=pika.BasicProperties(correlation_id = props.correlation_id),
+    #                  body=response)
     ch.basic_publish(exchange='',
-                     routing_key=props.reply_to,
-                     properties=pika.BasicProperties(correlation_id = props.correlation_id),
-                     body=response)
+                        routing_key='responseQ',
+                        body=json.dumps(contents),
+                        properties=pika.BasicProperties(
+                            delivery_mode = 2, # make message persistent
+                        ))
+    print("Sent to responseQ")
     ch.basic_ack(delivery_tag=method.delivery_tag)
 def on_sync(ch, method, properties, body):
     response = writeData(body)
@@ -141,7 +148,7 @@ if(mode=='master'):
     channel.exchange_declare(exchange='sync', exchange_type='fanout')
     channel.basic_qos(prefetch_count=1)
     channel.basic_consume(queue='writeQ', on_message_callback=on_request_write)
-    print(" [x] Awaiting requests")
+    print(" [x] Awaiting requests to write from orchestrator")
     channel.start_consuming()
 
 if(mode=='slave'):
@@ -152,28 +159,18 @@ if(mode=='slave'):
     Ride = db.rides
     User = db.users
     Model = db.users
-
+    #note slaves have to cater to readQ.. sync with master .. and push data to responseq
     channel.queue_declare(queue='readQ')
-
+    channel.queue_declare(queue='responseQ', durable=True)
+    channel.exchange_declare(exchange='sync', exchange_type='fanout')
     channel.basic_qos(prefetch_count=1)
     channel.basic_consume(queue='readQ', on_message_callback=on_request_read)
-
-    channel.exchange_declare(exchange='sync', exchange_type='fanout')
-
     result = channel.queue_declare(queue='', exclusive=True)
     queue_name = result.method.queue #random queue name generated... temporary q
-
     channel.queue_bind(exchange='sync', queue=queue_name)
-
-    print(' [*] waiting for  messages.')
-
-
-
     channel.basic_consume(
         queue=queue_name, on_message_callback=on_sync, auto_ack=True)
-
-
-    print(" [x] Awaiting requests")
+    print(" [x] Awaiting requests to read from orchestrator")
     channel.start_consuming()
 
 
