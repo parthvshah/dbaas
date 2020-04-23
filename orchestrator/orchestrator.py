@@ -13,6 +13,9 @@ from pymongo import MongoClient
 client = docker.from_env()
 
 def spawn_pair(number):
+    if(number==0):
+        return
+
     ids = []
     for i in range(number):
         mongo_container = client.containers.run('mongo',
@@ -44,40 +47,26 @@ def init_scale_watch():
     counts_col = db['counts']
     containers_col = db['containers']
     cycle = 0
-    # count = counts_col.find_one()
-    # setz = {"$set": {"count": 0}}
-    # counts_col.update(count, setz)
 
+    set_count = counts_col.find_one_and_update({"name": "default"}, {"$set": {"count": 25}}, upsert=True)
 
     while True:
         cycle += 1
-        print(" [x] Spawn watch cycle", cycle)
-        count = counts_col.find_one()
-        # count = c['count']
-        print("count is",count)
+        print(" [o] Spawn watch cycle", cycle)
+        res = counts_col.find_one({"name": "default"})
+        count = res['count']
+        print(" [o] Count is", count)
         to_spawn = count // 20
         new_list = spawn_pair(to_spawn)
 
+        if(new_list):
+            print(" [o] Spawned", to_spawn, "contianers with IDs", new_list) 
+            for pair in new_list:
+                container = containers_col.find_one_and_update({"name": "default"}, {"$push": {"containers": {"mongo": pair[0], "slave": pair[1]}}}, upsert=True)
 
-        # (string0, string1)
-        print(" [x] Spawned", to_spawn, "contianers with IDs", new_list)   
+        set_count = counts_col.find_one_and_update({"name": "default"}, {"$set": {"count": 0}})
 
-        # Add db call here to set new list of contianers (append)
-        str0 = new_list[0]
-        str1 = new_list[1]
-
-        container = containers_col.find()
-        setv1 = {"$set": {"master": str0}}
-
-        containers_col.update(container, setv1)
-
-        setv2 = {"$set": {"slave": str1}}
-        containers_col.update(container, setv2)
-
-
-        setz = {"$set": {"count": 0}}
-        time.sleep(120)
-        counts_col.update(count, setz)
+        time.sleep(30)
 
 class CustomServer(Server):
     def __call__(self, app, *args, **kwargs):
@@ -101,14 +90,14 @@ def send_to_master():
     content = request.get_json()
     print (content)
     #send contents fo rabbitmq(pika)
-    print(" [x] Requesting to master")
+    print(" [o] Requesting to master")
     db_rpc = RpcClient("writeQ");
 
-    print(" [x] Requesting to master")
+    print(" [o] Requesting to master")
     response = db_rpc.call(content)
     response=json.loads(response)
     #obtain results
-    print(" [.] Got %r" % response)
+    print(" [o] Got %r" % response)
     return jsonify(response),201  #send it back to user/rides microservice #jsonify
 
 @app.route('/api/v1/db/read', methods = ['POST'])
@@ -119,15 +108,12 @@ def send_to_slaves():
     # send to readQ(contents)
     db_rpc = RpcClient("readQ");
 
-    print(" [x] Requesting to slave")
+    print(" [o] Requesting to slave")
     response = db_rpc.call(content) #call sends it into the q
     #obtain results
-    print(" [.] Got %r" % response)
+    print(" [o] Got %r" % response)
 
-    # add db call to update count
-    count = counts_col.find()
-    inc = { "$inc": {"count": 1}}
-    counts_col.update(count, inc)
+    count = counts_col.find_one_and_update({"name": "default"}, {"$inc": {"count": 1}})
     return ("response_json",response),201 #send it back to user/rides microservice #jsonify
 
 if __name__ == '__main__':
