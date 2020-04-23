@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_script import Manager, Server
-from send import RpcClient #send_to_writeQ,send_to_readQ,     # defined in this dir
+from send import RpcClient ,send_to_writeQ,send_to_readQ,receive_from_responseQ     # defined in this dir
 import pika
 import json
 import sys
@@ -77,14 +77,19 @@ def send_to_master():
     print (content)
     #send contents fo rabbitmq(pika)
     print(" [x] Requesting to master")
-    db_rpc = RpcClient("writeQ");
+    # db_rpc = RpcClient("writeQ");
 
-    print(" [x] Requesting to master")
-    response = db_rpc.call(content)
-    response=json.loads(response)
-    #obtain results
-    print(" [.] Got %r" % response)
-    return jsonify(response),201  #send it back to user/rides microservice #jsonify
+    # print(" [x] Requesting to master")
+    # response = db_rpc.call(content)
+    send_to_writeQ(content)
+    print("[x] sent to writeQ)
+    # response=None #set this value inside receive_from_responseQ
+    # response=receive_from_responseQ()
+    # response=json.loads(response) #convert to json
+    # if response is not None:
+    #     print(" [.] Got %r" % response)
+    #     return jsonify(response),201  #send it back to user/rides microservice #jsonify
+    # print("[x] No response received from responseQ)
 
 @app.route('/api/v1/db/read', methods = ['POST'])
 def send_to_slaves():
@@ -92,15 +97,21 @@ def send_to_slaves():
     content = request.get_json()
     print (content)
     # send to readQ(contents)
-    db_rpc = RpcClient("readQ");
-
-    print(" [x] Requesting to slave")
-    response = db_rpc.call(content) #call sends it into the q
-    #obtain results
-    print(" [.] Got %r" % response)
-
+    # db_rpc = RpcClient("readQ");
+    # print(" [x] Requesting to slave")
+    # response = db_rpc.call(content) #call sends it into the q
+    # #obtain results
+    # print(" [.] Got %r" % response)
+    send_to_readQ(content)
+    response=None #set this value inside receive_from_responseQ
+    response=receive_from_responseQ()
+    response=json.loads(response) #convert to json      # note responseQ as db data
+    if response is not None:
+        print(" [.] Got %r" % response)
+        return jsonify(response),201  #send it back to user/rides microservice #jsonify
+    print("[x] No response received from responseQ)
     # add db call to update count
-    return ("response_json",response),201 #send it back to user/rides microservice #jsonify
+    return (response),201 #send it back to user/rides microservice #jsonify
 
 if __name__ == '__main__':
     # app.run(debug=True, host='0.0.0.0')
