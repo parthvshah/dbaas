@@ -15,7 +15,7 @@ def spawn_pair(number):
     for i in range(number):
         mongo_container = client.containers.run('mongo',
                                             #name='new_mongo',
-                                            network='database-as-a-service_default',
+                                            network='database_as_service_default',
                                             detach=True)
         
         mongo_container_id = mongo_container.id
@@ -25,8 +25,8 @@ def spawn_pair(number):
         image = client.images.build(path='/master_slave')
         slave_container = client.containers.run(image[0],
                                         # name='new_master_slave',
-                                        volumes={'/home/parth/Documents/College/CC/Project/Database-as-a-Service/master_slave': {'bind': '/master_slave'}},
-                                        network='database-as-a-service_default',
+                                        volumes={'/home/rajath/Documents/DataBase_as_Service': {'bind': '/master_slave'}},
+                                        network='database_as_service_default',
                                         links={'rmq_host': 'rmq', mongo_container_id:'mongo'},
                                         restart_policy={"Name": "on-failure", "MaximumRetryCount": 5},
                                         command='sh -c "sleep 15 && python -u master_slave.py slave"',
@@ -82,7 +82,7 @@ def send_to_master():
     # print(" [x] Requesting to master")
     # response = db_rpc.call(content)
     send_to_writeQ(content)
-    print("[x] sent to writeQ)
+    print("[x] sent to writeQ")
     # response=None #set this value inside receive_from_responseQ
     # response=receive_from_responseQ()
     # response=json.loads(response) #convert to json
@@ -109,8 +109,8 @@ def send_to_slaves():
     if response is not None:
         print(" [.] Got %r" % response)
         return jsonify(response),201  #send it back to user/rides microservice #jsonify
-    else 
-        print("[x] No response received from responseQ)
+    else :
+        print("[x] No response received from responseQ")
     # add db call to update count
     #send it back to user/rides microservice #jsonify
 
