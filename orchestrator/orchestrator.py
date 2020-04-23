@@ -27,7 +27,7 @@ def spawn_pair(number):
         image = client.images.build(path='/master_slave')
         slave_container = client.containers.run(image[0],
                                         # name='new_master_slave',
-                                        volumes={'/home/parth/Documents/College/CC/Project/Database-as-a-Service/master_slave': {'bind': '/master_slave'}},
+                                        volumes={'/Users/richa/Desktop/Sem6/CC/Database-as-a-Service/master_slave': {'bind': '/master_slave'}},
                                         network='database-as-a-service_default',
                                         links={'rmq_host': 'rmq', mongo_container_id:'mongo'},
                                         restart_policy={"Name": "on-failure", "MaximumRetryCount": 5},
@@ -40,29 +40,42 @@ def spawn_pair(number):
 
 def init_scale_watch():
     myclient = MongoClient("orch_mongo")    
-    db = myclient.orch
-    counts_col = db.counts
-    containers_col = db.containers
+    db = myclient['orch']
+    counts_col = db['counts']
+    containers_col = db['containers']
     cycle = 0
+    # count = counts_col.find_one()
+    # setz = {"$set": {"count": 0}}
+    # counts_col.update(count, setz)
+
+
     while True:
         cycle += 1
         print(" [x] Spawn watch cycle", cycle)
-        # Add db call here to get cur count
-        # assuming collection is called counts
-        # check if it returns a key value pair
-
-        # count = 25
-        count = counts_col.find()
-        
-
+        count = counts_col.find_one()
+        # count = c['count']
+        print("count is",count)
         to_spawn = count // 20
         new_list = spawn_pair(to_spawn)
+
+
+        # (string0, string1)
         print(" [x] Spawned", to_spawn, "contianers with IDs", new_list)   
 
         # Add db call here to set new list of contianers (append)
+        str0 = new_list[0]
+        str1 = new_list[1]
+
+        container = containers_col.find()
+        setv1 = {"$set": {"master": str0}}
+
+        containers_col.update(container, setv1)
+
+        setv2 = {"$set": {"slave": str1}}
+        containers_col.update(container, setv2)
 
 
-        setz = {"$set:" {"count": 0}}
+        setz = {"$set": {"count": 0}}
         time.sleep(120)
         counts_col.update(count, setz)
 

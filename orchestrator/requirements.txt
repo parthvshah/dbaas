@@ -3,3 +3,4 @@ pika
 Flask
 docker
 Flask-Script
+pymongo

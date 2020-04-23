@@ -20,7 +20,13 @@ services:
     privileged: true
     depends_on:
         - rmq
+        - orch_mongo
     restart: on-failure
+  
+  orch_mongo:
+    container_name: orch_mongo
+    image: mongo
+    restart: always
 
   slave:
     container_name: slave
