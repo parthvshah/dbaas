@@ -13,7 +13,7 @@ def spawn_pair(number):
     for i in range(number):
         mongo_container = client.containers.run('mongo',
                                             #name='new_mongo',
-                                            network='database-as-a-service_default',
+                                            network='dbaas-network',
                                             detach=True)
         
         mongo_container_id = mongo_container.id
@@ -24,7 +24,7 @@ def spawn_pair(number):
         slave_container = client.containers.run(image[0],
                                         # name='new_master_slave',
                                         volumes={'/Users/richa/Desktop/Sem6/CC/Database-as-a-Service/master_slave': {'bind': '/master_slave'}},
-                                        network='database-as-a-service_default',
+                                        network='dbaas-network',
                                         links={'rmq_host': 'rmq', mongo_container_id:'mongo'},
                                         restart_policy={"Name": "on-failure", "MaximumRetryCount": 5},
                                         command='sh -c "sleep 15 && python -u master_slave.py slave"',

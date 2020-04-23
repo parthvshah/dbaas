@@ -1,9 +1,15 @@
 version: '3.7'
 
+networks:
+  dbaas-network:
+   name: dbaas-network
+
 services:
   rmq:
     container_name: rmq_host
     image: rabbitmq:3.8.3-alpine
+    networks:
+      - dbaas-network
 
   orchestrator:
     container_name: orch
@@ -21,11 +27,15 @@ services:
     depends_on:
         - rmq
         - orch_mongo
+    networks:
+      - dbaas-network
     restart: on-failure
   
   orch_mongo:
     container_name: orch_mongo
     image: mongo
+    networks:
+      - dbaas-network
     restart: always
 
   slave:
@@ -39,11 +49,15 @@ services:
     depends_on:
         - rmq
         - slave_mongo
+    networks:
+      - dbaas-network
     restart: on-failure
 
   slave_mongo:
     container_name: slave_mongo
     image: mongo
+    networks:
+      - dbaas-network
     restart: always
 
 
@@ -58,11 +72,14 @@ services:
     depends_on:
         - rmq
         - master_mongo
+    networks:
+      - dbaas-network
     restart: on-failure
 
   master_mongo:
     container_name: master_mongo
     image: mongo
+    networks:
+      - dbaas-network
     restart: always
-  
   
