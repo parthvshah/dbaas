@@ -61,7 +61,11 @@ class CustomServer(Server):
 
 app = Flask(__name__)
 manager = Manager(app)
-manager.add_command('runserver', CustomServer())
+manager.add_command('runserver', )
+manager.add_command("runserver", CustomServer(
+    use_debugger = True,
+    use_reloader = True,
+    host = '0.0.0.0') )
 
 #!/usr/bin/env python
 @app.route('/')   #demo function
@@ -116,4 +120,4 @@ def send_to_slaves():
 
 if __name__ == '__main__':
     # app.run(debug=True, host='0.0.0.0')
-    manager.run()
+    manager.run(host='0.0.0.0')
