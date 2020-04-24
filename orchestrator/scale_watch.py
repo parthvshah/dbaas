@@ -23,7 +23,7 @@ def spawn_pair(number):
         image = client.images.build(path='/master_slave')
         slave_container = client.containers.run(image[0],
                                         # name='new_master_slave',
-                                        volumes={'/Users/richa/Desktop/Sem6/CC/Database-as-a-Service/master_slave': {'bind': '/master_slave'}},
+                                        volumes={'/home/parth/Documents/College/CC/Project/Database-as-a-Service': {'bind': '/master_slave'}},
                                         network='dbaas-network',
                                         links={'rmq_host': 'rmq', mongo_container_id:'mongo'},
                                         restart_policy={"Name": "on-failure", "MaximumRetryCount": 5},
@@ -44,21 +44,21 @@ def init_scale_watch():
 
     while True:
         cycle += 1
-        print(" [o] Spawn watch cycle", cycle)
+        print(" [sw] Spawn watch cycle", cycle)
         res = counts_col.find_one({"name": "default"})
         count = res['count']
-        print(" [o] Count is", count)
+        print(" [sw] Count is", count)
         to_spawn = count // 20
         new_list = spawn_pair(to_spawn)
 
         if(new_list):
-            print(" [o] Spawned", to_spawn, "contianers with IDs", new_list) 
+            print(" [sw] Spawned", to_spawn, "contianers with IDs", new_list) 
             for pair in new_list:
                 container = containers_col.find_one_and_update({"name": "default"}, {"$push": {"containers": {"mongo": pair[0], "slave": pair[1]}}}, upsert=True)
 
         set_count = counts_col.find_one_and_update({"name": "default"}, {"$set": {"count": 0}})
 
-        time.sleep(30)
+        time.sleep(2*60)
 
 if __name__ == "__main__":
     init_scale_watch()

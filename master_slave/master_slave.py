@@ -13,7 +13,6 @@ connection = pika.BlockingConnection(
 channel = connection.channel()
 
 
-
 def writeData(req):
     req = json.loads(req)
     try:
@@ -114,7 +113,7 @@ def readData(req):
         return json.dumps({ "success": False, "message": "Model cannot be blank." })
 
 def on_request_read(ch, method, props, body):
-    print(" [.] Processing request")
+    print(" [.] Processing request:", body)
     response = readData(body)
 
     ch.basic_publish(exchange='',
@@ -122,6 +121,7 @@ def on_request_read(ch, method, props, body):
                      properties=pika.BasicProperties(correlation_id = props.correlation_id),
                      body=response)
     ch.basic_ack(delivery_tag=method.delivery_tag)
+
 def on_sync(ch, method, properties, body):
     response = writeData(body)
 
@@ -153,28 +153,36 @@ if(mode=='slave'):
     User = db.users
     Model = db.users
 
-    channel.queue_declare(queue='readQ')
+    channel.queue_declare(queue='read_rpc')
 
     channel.basic_qos(prefetch_count=1)
-    channel.basic_consume(queue='readQ', on_message_callback=on_request_read)
+    channel.basic_consume(queue='read_rpc', on_message_callback=on_request_read)
 
-    channel.exchange_declare(exchange='sync', exchange_type='fanout')
-
-    result = channel.queue_declare(queue='', exclusive=True)
-    queue_name = result.method.queue #random queue name generated... temporary q
-
-    channel.queue_bind(exchange='sync', queue=queue_name)
-
-    print(' [*] waiting for  messages.')
-
-
-
-    channel.basic_consume(
-        queue=queue_name, on_message_callback=on_sync, auto_ack=True)
-
-
-    print(" [x] Awaiting requests")
+    print(" [x] Awaiting read_rpc requests")
     channel.start_consuming()
+
+    # channel.queue_declare(queue='readQ')
+
+    # channel.basic_qos(prefetch_count=1)
+    # channel.basic_consume(queue='readQ', on_message_callback=on_request_read)
+
+    # channel.exchange_declare(exchange='sync', exchange_type='fanout')
+
+    # result = channel.queue_declare(queue='', exclusive=True)
+    # queue_name = result.method.queue #random queue name generated... temporary q
+
+    # channel.queue_bind(exchange='sync', queue=queue_name)
+
+    # print(' [*] waiting for  messages.')
+
+
+
+    # channel.basic_consume(
+    #     queue=queue_name, on_message_callback=on_sync, auto_ack=True)
+
+
+    # print(" [x] Awaiting requests")
+    # channel.start_consuming()
 
 
 

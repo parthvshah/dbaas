@@ -39,7 +39,7 @@ services:
     restart: always
 
   slave:
-    container_name: slave
+    # container_name: slave
     build:
           context: ./master_slave
           dockerfile: Dockerfile
