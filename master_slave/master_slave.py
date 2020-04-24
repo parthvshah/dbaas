@@ -154,9 +154,14 @@ if(mode=='slave'):
     Model = db.users
 
     channel.queue_declare(queue='read_rpc')
-
+    channel.exchange_declare(exchange='sync', exchange_type='fanout')
     channel.basic_qos(prefetch_count=1)
     channel.basic_consume(queue='read_rpc', on_message_callback=on_request_read)
+    result = channel.queue_declare(queue='', exclusive=True)
+    queue_name = result.method.queue #random queue name generated... temporary q
+    channel.queue_bind(exchange='sync', queue=queue_name)
+    channel.basic_consume(
+        queue=queue_name, on_message_callback=on_sync, auto_ack=True)
 
     print(" [x] Awaiting read_rpc requests")
     channel.start_consuming()
