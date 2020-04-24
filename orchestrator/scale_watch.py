@@ -1,10 +1,20 @@
 import docker
-import time
-
+from time import sleep
 from pymongo import MongoClient
+import json
 
 client = docker.from_env()
 PATH = '/home/parth/Documents/College/CC/Project/Database-as-a-Service'
+
+def get_stats():
+    data = None
+    with open('./PID.file') as iFile:
+        try:
+            data = json.load(iFile)
+        except:
+            pass
+    
+    return data
 
 def spawn_pair(number):
     if(number==0):
@@ -59,7 +69,7 @@ def init_scale_watch():
 
         set_count = counts_col.find_one_and_update({"name": "default"}, {"$set": {"count": 0}})
 
-        time.sleep(2*60)
+        sleep(2*60)
 
 if __name__ == "__main__":
     init_scale_watch()

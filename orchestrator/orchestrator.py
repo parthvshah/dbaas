@@ -60,6 +60,7 @@ class ReadRpcClient(object):
             self.connection.process_data_events()
         print(" [rh] Response", self.response)
         return self.response
+        
 class WriteRpcClient(object):
     def __init__(self):
         self.connection = pika.BlockingConnection(
@@ -111,21 +112,6 @@ def send_to_master():
         return '', 204 
     else:
         return response, 200
-    # if not request.json:
-    #     abort(400)
-    # print (request.is_json)
-    # content = request.get_json()
-    # print (content)
-    # #send contents fo rabbitmq(pika)
-    # print(" [o] Requesting to master")
-    # db_rpc = RpcClient("writeQ")
-
-    # print(" [o] Requesting to master")
-    # response = db_rpc.call(content)
-    # response=json.loads(response)
-    # #obtain results
-    # print(" [o] Got %r" % response)
-    # return json.dumps(response),201  #send it back to user/rides microservice #jsonify
 
 @app.route('/api/v1/db/read', methods = ['POST'])
 def send_to_slaves():

@@ -39,7 +39,7 @@ services:
     restart: always
 
   slave:
-    # container_name: slave
+    container_name: slave
     build:
           context: ./master_slave
           dockerfile: Dockerfile
@@ -54,7 +54,7 @@ services:
     restart: on-failure
 
   slave_mongo:
-    # container_name: slave_mongo
+    container_name: slave_mongo
     image: mongo
     networks:
       - dbaas-network
