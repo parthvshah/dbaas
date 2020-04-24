@@ -4,6 +4,7 @@ import time
 from pymongo import MongoClient
 
 client = docker.from_env()
+PATH = '/home/parth/Documents/College/CC/Project/Database-as-a-Service'
 
 def spawn_pair(number):
     if(number==0):
@@ -23,7 +24,7 @@ def spawn_pair(number):
         image = client.images.build(path='/master_slave')
         slave_container = client.containers.run(image[0],
                                         # name='new_master_slave',
-                                        volumes={'/home/parth/Documents/College/CC/Project/Database-as-a-Service': {'bind': '/master_slave'}},
+                                        volumes={PATH+'/master_slave': {'bind': '/master_slave'}},
                                         network='dbaas-network',
                                         links={'rmq_host': 'rmq', mongo_container_id:'mongo'},
                                         restart_policy={"Name": "on-failure", "MaximumRetryCount": 5},
