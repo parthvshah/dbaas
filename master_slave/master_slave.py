@@ -137,11 +137,12 @@ if(mode=='master'):
     User = db.users
     Model = db.users
 
-    channel.queue_declare(queue='writeQ')
+    channel.queue_declare(queue='write_rpc')
     channel.exchange_declare(exchange='sync', exchange_type='fanout')
     channel.basic_qos(prefetch_count=1)
-    channel.basic_consume(queue='writeQ', on_message_callback=on_request_write)
-    print(" [x] Awaiting requests")
+    channel.basic_consume(queue='write_rpc', on_message_callback=on_request_write)
+    channel.basic_consume(queue='write_rpc', on_message_callback=on_request_write)
+    print(" [x] Awaiting requests write_rpc_requests")
     channel.start_consuming()
 
 if(mode=='slave'):

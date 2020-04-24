@@ -54,7 +54,7 @@ services:
     restart: on-failure
 
   slave_mongo:
-    container_name: slave_mongo
+    # container_name: slave_mongo
     image: mongo
     networks:
       - dbaas-network
