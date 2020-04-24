@@ -17,10 +17,6 @@ def send_to_writeQ(contents):
     connection.close()
     
 def send_to_readQ(contents,channel):
-    
-    
-    channel.queue_declare(queue='readQ', durable=True)
-    
     channel.basic_publish(exchange='',
                         routing_key='readQ',
                         body=json.dumps(contents),
@@ -33,7 +29,7 @@ def send_to_readQ(contents,channel):
 
 #     channel.start_consuming()
 def set_response_to_global_var(ch, method, properties, body):
-        print(" [x] Received from responseQ")
+        print(" [x] Received from responseQ %r",body)
         # time.sleep(body.count(b'.'))
         print(" [x] Done")
         global response

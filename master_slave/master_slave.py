@@ -116,20 +116,21 @@ def readData(req):
 def on_request_read(ch, method, props, body):
     print(" [.] Processing request")
     response = readData(body)
-    ch.queue_declare(queue='responseQ', durable=True)
+    ch.basic_ack(delivery_tag=method.delivery_tag)
+    
 
     # ch.basic_publish(exchange='',
     #                  routing_key=props.reply_to,
     #                  properties=pika.BasicProperties(correlation_id = props.correlation_id),
     #                  body=response)
-    ch.basic_publish(exchange='',
+    channel.basic_publish(exchange='',
                         routing_key='responseQ',
-                        body=json.dumps(response),
+                        body=response,
                         properties=pika.BasicProperties(
                             delivery_mode = 2, # make message persistent
                         ))
     print("Sent to responseQ")
-    ch.basic_ack(delivery_tag=method.delivery_tag)
+    
 def on_sync(ch, method, properties, body):
     response = writeData(body)
 
@@ -163,6 +164,7 @@ if(mode=='slave'):
     #note slaves have to cater to readQ.. sync with master .. and push data to responseq
     channel.queue_declare(queue='readQ',durable=True)
     channel.exchange_declare(exchange='sync', exchange_type='fanout')
+    channel.queue_declare(queue='responseQ', durable=True)
     channel.basic_qos(prefetch_count=1)
     channel.basic_consume(queue='readQ', on_message_callback=on_request_read)
     result = channel.queue_declare(queue='', exclusive=True)

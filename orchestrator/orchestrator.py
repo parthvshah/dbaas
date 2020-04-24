@@ -110,12 +110,13 @@ def send_to_slaves():
     # print(" [.] Got %r" % response)
     connection = pika.BlockingConnection(pika.ConnectionParameters(host='rmq'))
     channel = connection.channel()
+    channel.queue_declare(queue='readQ', durable=True)
     send_to_readQ(content,channel)
     channel.queue_declare(queue='responseQ', durable=True)
     # channel.basic_qos(prefetch_count=1)
     channel.basic_consume(queue='responseQ', on_message_callback=set_response_to_global_var)
     channel.start_consuming()
-    print(' [*] Waiting for messages from responseQ. To exit press CTRL+C')
+    print(' [*] Waiting for messages from responseQ. exit press CTRL+C')
     response=None #set this value inside receive_from_responseQ
     #response=receive_from_responseQ()
      #convert to json      # note responseQ as db data
@@ -130,7 +131,7 @@ def send_to_slaves():
     #send it back to user/rides microservice #jsonify
 
 def set_response_to_global_var(ch, method, properties, body):
-        print(" [x] Received from responseQ ")
+        print(" [x] Received from responseQ %r", body)
         # time.sleep(body.count(b'.'))
         print(" [x] Done")
         global response
