@@ -5,6 +5,8 @@ import json
 
 client = docker.from_env()
 PATH = '/home/parth/Documents/College/CC/Project/Database-as-a-Service'
+spawned_record = []
+newly_spawned_pairs = 0
 
 def get_stats():
     data = None
@@ -17,9 +19,6 @@ def get_stats():
     return data
 
 def spawn_pair(number):
-    if(number==0):
-        return
-
     ids = []
     for i in range(number):
         mongo_container = client.containers.run('mongo',
@@ -43,6 +42,21 @@ def spawn_pair(number):
                                         command='sh -c "sleep 15 && python -u master_slave.py slave"',
                                         detach=True)
         ids.append((mongo_container_id, slave_container.id))
+    global newly_spawned_pairs
+    newly_spawned_pairs += number
+    return ids
+
+def down_pair(number):
+    ids = []
+    for i in range(number):
+        ids.append(spawned_record.pop())
+
+    for pair in ids:
+        mongo_container = client.containers.get(pair[0])
+        slave_container = client.containers.get(pair[1])
+
+        mongo_container.stop()
+        slave_container.stop()
     
     return ids
 
@@ -62,12 +76,21 @@ def init_scale_watch():
         count = res['count']
         print(" [sw] Count is", count)
         to_spawn = count // 20
-        new_list = spawn_pair(to_spawn)
 
-        if(new_list):
-            print(" [sw] Spawned", to_spawn, "contianers with IDs", new_list) 
+        delta = to_spawn - newly_spawned_pairs
+        if(delta>0):
+            new_list = spawn_pair(abs(delta))
+            spawned_record.extend(new_list)
+            print(" [sw] Spawned", delta, "contianers with IDs", new_list) 
             for pair in new_list:
                 container = containers_col.find_one_and_update({"name": "default"}, {"$push": {"containers": {"mongo": pair[0], "slave": pair[1]}}}, upsert=True)
+        
+        if(delta<0):
+            down_list = down_pair(abs(delta))
+            print(" [sw] Downed", delta, "contianers with IDs", down_list) 
+            for pair in down_list:
+                container = containers_col.find_one_and_update({"name": "default"}, {"$pull": {"containers": {"mongo": pair[0], "slave": pair[1]}}})
+
 
         set_count = counts_col.find_one_and_update({"name": "default"}, {"$set": {"count": 0}})
 
