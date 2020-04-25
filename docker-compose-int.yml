@@ -79,6 +79,8 @@ services:
   master_mongo:
     container_name: master_mongo
     image: mongo
+    volumes:
+      - ./orchestrator:/data
     networks:
       - dbaas-network
     restart: always

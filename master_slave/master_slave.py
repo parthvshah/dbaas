@@ -132,7 +132,7 @@ if(mode=='master'):
     print(" [x] Master mode")
 
     client = MongoClient('master_mongo')
-    db = client.ride_share_db_dev
+    db = client.dbaas_db
     Ride = db.rides
     User = db.users
     Model = db.users
@@ -148,7 +148,7 @@ if(mode=='slave'):
     print(" [x] Slave mode")
 
     client = MongoClient('slave_mongo')
-    db = client.ride_share_db_dev
+    db = client.dbaas_db
     Ride = db.rides
     User = db.users
     Model = db.users

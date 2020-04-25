@@ -18,6 +18,9 @@ db = myclient['orch']
 counts_col = db['counts']
 containers_col = db['containers']
 
+import docker
+client = docker.from_env()
+
 class CustomServer(Server):
     def __call__(self, app, *args, **kwargs):
         return Server.__call__(self, app, *args, **kwargs)
@@ -107,7 +110,12 @@ def send_to_master():
 
     write_rpc = WriteRpcClient()
     async_res = pool.apply_async(write_rpc.call, (json.dumps(content),))
-    response = async_res.get().decode('utf8')    
+    response = async_res.get().decode('utf8')
+
+    master_mongo = client.containers.get('master_mongo')
+    output = master_mongo.exec_run('bash -c "mongodump --archive="/data/db-dump" --db=dbaas_db"')
+    sleep(1)
+
     if(not response):
         return '', 204 
     else:
