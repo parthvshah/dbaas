@@ -269,4 +269,3 @@ if zk.exists("/leader"):
 else:
 	print "No leader election"
 	
-zk.stop()
