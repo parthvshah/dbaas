@@ -239,7 +239,7 @@ def leader(mynode, children, length):
 			pass
 	zk.exists("/leader/%s"%p_node, watch=check)
 
-zk = KazooClient(hosts='172.31.13.20:2181')
+zk = KazooClient(hosts='zoo:2181')
 zk.add_listener(my_listener)
 zk.start()
 
