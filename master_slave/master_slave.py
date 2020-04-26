@@ -264,7 +264,7 @@ if zk.exists("/leader"):
 			
 			print " Watching the next smaller node"
 
-		time.sleep(5)
+		#time.sleep(5)
 
 else:
 	print "No leader election"
