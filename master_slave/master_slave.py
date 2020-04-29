@@ -7,6 +7,7 @@ import json
 from bson.json_util import dumps
 import sys
 from kazoo.client import KazooClient, KazooState
+import socket
 import logging
 logging.basicConfig()
 
@@ -19,6 +20,7 @@ channel = connection.channel()
 # Zookeeper setup
 zk = KazooClient(hosts='zoo')
 zk.start()
+myid = str(socket.gethostname())
 
 def my_listener(state):
     if state == KazooState.LOST:
@@ -35,6 +37,14 @@ def my_listener(state):
 
 zk.add_listener(my_listener)
 
+def id_helper(myid):
+    pid_arr = []
+    with open("PID.file",) as msFile:
+        pid_arr = json.load(msFile)
+        for container in pid_arr:
+            for field in container:
+                if(myid in field):
+                    return container[2]
 
 def writeData(req):
     req = json.loads(req)
@@ -150,19 +160,11 @@ def on_sync(ch, method, properties, body):
 
     print(" [m] Wrote data on sync -- %r" % response)
 
-mode = sys.argv[1]
-if(mode=='master'):
+def master_mode():
     print(" [m] Master mode")
-
-    pid_arr = []
-    with open("PID.file",) as mFile:
-        pid_arr = json.load(mFile)
-        for container in pid_arr:
-            if('master' in container):
-                zk.create("/master/"+str(container[2]), b"Surprise!", ephemeral=True, makepath=True)
-                print(" [m] Zookeper node created")
-                break
-
+   
+    zk.create("/master/"+str(id_helper(myid)), b"master", ephemeral=True, makepath=True)
+    print(" [m] Zookeper master node created")
     
     client = MongoClient('master_mongo')
     db = client.dbaas_db
@@ -177,17 +179,11 @@ if(mode=='master'):
     print(" [x] Awaiting requests write_rpc_requests")
     channel.start_consuming()
 
-if(mode=='slave'):
+def slave_mode():
     print(" [s] Slave mode")
-
-    pid_arr = []
-    with open("PID.file",) as sFile:
-        pid_arr = json.load(sFile)
-        for container in pid_arr:
-            if('slave' in container):
-                zk.create("/slave/"+str(container[2]), b"Surprise!", ephemeral=True, makepath=True)
-                print(" [s] Zookeper node created")
-                break
+    
+    zk.create("/slave/"+str(id_helper(myid)), b"slave", ephemeral=True, makepath=True)
+    print(" [s] Zookeper slave node created") 
 
     client = MongoClient('slave_mongo')
     db = client.dbaas_db
@@ -208,28 +204,9 @@ if(mode=='slave'):
     print(" [s] Awaiting read_rpc requests")
     channel.start_consuming()
 
-    # channel.queue_declare(queue='readQ')
-
-    # channel.basic_qos(prefetch_count=1)
-    # channel.basic_consume(queue='readQ', on_message_callback=on_request_read)
-
-    # channel.exchange_declare(exchange='sync', exchange_type='fanout')
-
-    # result = channel.queue_declare(queue='', exclusive=True)
-    # queue_name = result.method.queue #random queue name generated... temporary q
-
-    # channel.queue_bind(exchange='sync', queue=queue_name)
-
-    # print(' [*] waiting for  messages.')
-
-
-
-    # channel.basic_consume(
-    #     queue=queue_name, on_message_callback=on_sync, auto_ack=True)
-
-
-    # print(" [x] Awaiting requests")
-    # channel.start_consuming()
-
-
-
+# For init
+if(zk.exists('/election/master')):
+    slave_mode()
+else:
+    zk.create("/election/master", myid.encode('utf-8'), ephemeral=True, makepath=True)
+    master_mode()

@@ -46,7 +46,7 @@ def spawn_pair(number):
                                         network='dbaas-network',
                                         links={'rmq_host': 'rmq', mongo_container_id: 'mongo'},
                                         restart_policy={"Name": "on-failure", "MaximumRetryCount": 5},
-                                        command='sh -c "sleep 15 && python -u master_slave.py slave"',
+                                        command='sh -c "sleep 15 && python -u master_slave.py"',
                                         detach=True)
         ids.append((mongo_container_id, slave_container.id))
     global newly_spawned_pairs

@@ -44,46 +44,46 @@ services:
       - dbaas-network
     restart: always
 
-  slave:
-    container_name: slave
+  master_slave_1:
+    container_name: ms_1
     build:
           context: ./master_slave
           dockerfile: Dockerfile
-    command: sh -c "sleep 15 && python -u master_slave.py slave"
+    command: sh -c "sleep 15 && python -u master_slave.py"
     volumes:
         - ./master_slave:/master_slave
     depends_on:
         - rmq
-        - s_mongo
+        - mongo_1
     networks:
       - dbaas-network
     restart: on-failure
 
-  s_mongo:
-    container_name: s_mongo
+  mongo_1:
+    container_name: mongo_1
     image: mongo
     networks:
       - dbaas-network
     restart: always
 
 
-  master:
-    container_name: master
+  master_slave_2:
+    container_name: ms_2
     build:
           context: ./master_slave
           dockerfile: Dockerfile
-    command: sh -c "sleep 15 && python -u master_slave.py master"
+    command: sh -c "sleep 15 && python -u master_slave.py"
     volumes:
           - ./master_slave:/master_slave
     depends_on:
         - rmq
-        - m_mongo
+        - mongo_2
     networks:
       - dbaas-network
     restart: on-failure
 
-  m_mongo:
-    container_name: m_mongo
+  mongo_2:
+    container_name: mongo_2
     image: mongo
     volumes:
       - ./orchestrator:/data
