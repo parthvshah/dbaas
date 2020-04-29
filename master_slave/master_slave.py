@@ -9,6 +9,9 @@ import sys
 from kazoo.client import KazooClient, KazooState
 import socket
 import logging
+import subprocess
+import os
+
 logging.basicConfig()
 
 # Pika setup
@@ -160,7 +163,7 @@ def on_sync(ch, method, properties, body):
 
     print(" [m] Wrote data on sync -- %r" % response)
 
-def master_mode():
+def master_mode(re_election=False):
     print(" [m] Master mode")
    
     zk.create("/master/"+str(id_helper(myid)), b"master", ephemeral=True, makepath=True)
@@ -177,7 +180,10 @@ def master_mode():
     channel.basic_qos(prefetch_count=1)
     channel.basic_consume(queue='write_rpc', on_message_callback=on_request_write)
     print(" [x] Awaiting requests write_rpc_requests")
-    channel.start_consuming()
+    if(re_election):
+        pass
+    else:
+        channel.start_consuming()
 
 def slave_mode():
     print(" [s] Slave mode")
@@ -203,6 +209,22 @@ def slave_mode():
 
     print(" [s] Awaiting read_rpc requests")
     channel.start_consuming()
+
+# For switch
+@zk.DataWatch("/election/master")
+def watch_node(data, stat):
+    try:
+        master_watch_pid = data.decode("utf-8")
+    except:
+        master_watch_pid = -1
+
+    if(id_helper(myid) == master_watch_pid):
+        print(" [ms] I am master.")
+        if(zk.exists("/slave/"+str(id_helper(myid)))):
+            print(" [ms] Switching to master.")
+            # os.execl(sys.executable, 'python', __file__, *sys.argv[1:])
+            exit()
+        
 
 # For init
 if(zk.exists('/election/master')):
