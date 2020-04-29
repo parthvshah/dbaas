@@ -20,9 +20,13 @@ def conduct_election():
     print(" [z] Conducting election.")
 
     children = zk.get_children("/slave")
-    print(children)
 
-    dec_pid = str(0)
+    int_children = []
+    for child in children:
+        int_children.append(int(child))
+
+    int_children = sorted(int_children)
+    dec_pid = str(int_children[0])
 
     zk.create("/election/master", dec_pid.encode('utf-8'), ephemeral=True, makepath=True)
 
@@ -36,7 +40,7 @@ if __name__ == "__main__":
             retry_count += 1
             print(" [z] Retrying. Count", retry_count)
 
-            if(retry_count==5):
+            if(retry_count==3):
                 conduct_election()
                 retry_count = 0
 
