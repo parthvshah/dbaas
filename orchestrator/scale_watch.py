@@ -3,10 +3,17 @@ from time import sleep
 from pymongo import MongoClient
 import json
 
+from kazoo.client import KazooClient, KazooState
+
+
 client = docker.from_env()
 PATH = '/home/parth/Documents/College/CC/Project/Database-as-a-Service'
 spawned_record = []
 newly_spawned_pairs = 0
+
+# Zookeper setup
+zk = KazooClient(hosts='zoo')
+zk.start()
 
 def get_stats():
     data = None
@@ -95,6 +102,14 @@ def init_scale_watch():
         set_count = counts_col.find_one_and_update({"name": "default"}, {"$set": {"count": 0}})
 
         sleep(2*60)
+
+@zk.ChildrenWatch("/master")
+def watch_master(children):
+    print(" [sw] Master is: %s" % children)
+
+@zk.ChildrenWatch("/slave")
+def watch_slaves(children):
+    print(" [sw] Slave(s) are: %s" % children)
 
 if __name__ == "__main__":
     init_scale_watch()

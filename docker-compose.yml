@@ -10,6 +10,12 @@ services:
     image: rabbitmq:3.8.3-alpine
     networks:
       - dbaas-network
+  
+  zoo:
+    container_name: zoo
+    image: zookeeper
+    networks:
+      - dbaas-network
 
   orchestrator:
     container_name: orch
@@ -48,13 +54,13 @@ services:
         - ./master_slave:/master_slave
     depends_on:
         - rmq
-        - slave_mongo
+        - s_mongo
     networks:
       - dbaas-network
     restart: on-failure
 
-  slave_mongo:
-    container_name: slave_mongo
+  s_mongo:
+    container_name: s_mongo
     image: mongo
     networks:
       - dbaas-network
@@ -71,13 +77,13 @@ services:
           - ./master_slave:/master_slave
     depends_on:
         - rmq
-        - master_mongo
+        - m_mongo
     networks:
       - dbaas-network
     restart: on-failure
 
-  master_mongo:
-    container_name: master_mongo
+  m_mongo:
+    container_name: m_mongo
     image: mongo
     volumes:
       - ./orchestrator:/data

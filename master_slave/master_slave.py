@@ -1,16 +1,39 @@
 #!/usr/bin/env python
+import uuid
 import pika
 import pymongo
 from pymongo import MongoClient
 import json
 from bson.json_util import dumps
 import sys
+from kazoo.client import KazooClient, KazooState
+import logging
+logging.basicConfig()
 
 # Pika setup
 connection = pika.BlockingConnection(
     pika.ConnectionParameters(host='rmq'))
 
 channel = connection.channel()
+
+# Zookeeper setup
+zk = KazooClient(hosts='zoo')
+zk.start()
+
+def my_listener(state):
+    if state == KazooState.LOST:
+        # Register somewhere that the session was lost
+        print(" [ms] Connection error - lost")
+
+    elif state == KazooState.SUSPENDED:
+        # Handle being disconnected from Zookeeper
+        print(" [ms] Connection error - suspended")
+
+    else:
+        # Handle being connected/reconnected to Zookeeper
+        print(" [ms] Connected to zoo")
+
+zk.add_listener(my_listener)
 
 
 def writeData(req):
@@ -72,7 +95,7 @@ def writeData(req):
         return json.dumps({ "success": False, "message": "Error: Model and operation cannot be blank." })
 
 def on_request_write(ch, method, props, body):
-    print(" [.] Processing request...on_req_write")
+    print(" [m] Processing request...on_req_write")
     response = writeData(body)
 
     ch.basic_publish(exchange='',
@@ -82,7 +105,7 @@ def on_request_write(ch, method, props, body):
     ch.basic_ack(delivery_tag=method.delivery_tag)
     #send to sync once
     ch.basic_publish(exchange='sync', routing_key='', body=body) #send to sync exchange
-    print(" [x] Sent %r" % response)
+    print(" [m] Sent %r" % response)
 
 def readData(req):
     req = json.loads(req)
@@ -106,14 +129,14 @@ def readData(req):
         except:
             return json.dumps({ "success": False, "message": "Find error." })
 
-        print(" [.] Accessed records")
+        print(" [s] Accessed records")
         return dumps(results)
         
     else:
         return json.dumps({ "success": False, "message": "Model cannot be blank." })
 
 def on_request_read(ch, method, props, body):
-    print(" [.] Processing request:", body)
+    print(" [s] Processing request:", body)
     response = readData(body)
 
     ch.basic_publish(exchange='',
@@ -125,12 +148,22 @@ def on_request_read(ch, method, props, body):
 def on_sync(ch, method, properties, body):
     response = writeData(body)
 
-    print(" [x] wrote data on sync -- %r" % response)
+    print(" [m] Wrote data on sync -- %r" % response)
 
 mode = sys.argv[1]
 if(mode=='master'):
-    print(" [x] Master mode")
+    print(" [m] Master mode")
 
+    pid_arr = []
+    with open("PID.file",) as mFile:
+        pid_arr = json.load(mFile)
+        for container in pid_arr:
+            if('master' in container):
+                zk.create("/master/"+str(container[2]), b"Surprise!", ephemeral=True, makepath=True)
+                print(" [m] Zookeper node created")
+                break
+
+    
     client = MongoClient('master_mongo')
     db = client.dbaas_db
     Ride = db.rides
@@ -145,7 +178,16 @@ if(mode=='master'):
     channel.start_consuming()
 
 if(mode=='slave'):
-    print(" [x] Slave mode")
+    print(" [s] Slave mode")
+
+    pid_arr = []
+    with open("PID.file",) as sFile:
+        pid_arr = json.load(sFile)
+        for container in pid_arr:
+            if('slave' in container):
+                zk.create("/slave/"+str(container[2]), b"Surprise!", ephemeral=True, makepath=True)
+                print(" [s] Zookeper node created")
+                break
 
     client = MongoClient('slave_mongo')
     db = client.dbaas_db
@@ -163,7 +205,7 @@ if(mode=='slave'):
     channel.basic_consume(
         queue=queue_name, on_message_callback=on_sync, auto_ack=True)
 
-    print(" [x] Awaiting read_rpc requests")
+    print(" [s] Awaiting read_rpc requests")
     channel.start_consuming()
 
     # channel.queue_declare(queue='readQ')

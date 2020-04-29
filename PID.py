@@ -25,8 +25,11 @@ def query_os():
 if __name__ == "__main__":
     while True:
         response = query_os()
-        with open('./orchestrator/PID.file', 'w') as oFile:
-            json.dump(response, oFile)
+        with open('./orchestrator/PID.file', 'w') as ooFile:
+            json.dump(response, ooFile)
+        
+        with open('./master_slave/PID.file', 'w') as omsFile:
+            json.dump(response, omsFile)
         
         sleep(1)
     
