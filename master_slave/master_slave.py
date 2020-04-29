@@ -166,7 +166,7 @@ def master_mode():
     zk.create("/master/"+str(id_helper(myid)), b"master", ephemeral=True, makepath=True)
     print(" [m] Zookeper master node created")
     
-    client = MongoClient('master_mongo')
+    client = MongoClient('mongo_1')
     db = client.dbaas_db
     Ride = db.rides
     User = db.users
@@ -185,7 +185,7 @@ def slave_mode():
     zk.create("/slave/"+str(id_helper(myid)), b"slave", ephemeral=True, makepath=True)
     print(" [s] Zookeper slave node created") 
 
-    client = MongoClient('slave_mongo')
+    client = MongoClient('mongo_2')
     db = client.dbaas_db
     Ride = db.rides
     User = db.users
@@ -208,5 +208,6 @@ def slave_mode():
 if(zk.exists('/election/master')):
     slave_mode()
 else:
-    zk.create("/election/master", myid.encode('utf-8'), ephemeral=True, makepath=True)
+    master_pid = str(id_helper(myid))
+    zk.create("/election/master", master_pid.encode('utf-8'), ephemeral=True, makepath=True)
     master_mode()
