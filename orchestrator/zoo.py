@@ -40,7 +40,7 @@ if __name__ == "__main__":
             retry_count += 1
             print(" [z] Retrying. Count", retry_count)
 
-            if(retry_count==3):
+            if(retry_count==5):
                 conduct_election()
                 retry_count = 0
 

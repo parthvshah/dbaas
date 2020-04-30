@@ -44,6 +44,7 @@ def spawn_pair(number):
                                         # name='new_master_slave',
                                         volumes={PATH+'/master_slave': {'bind': '/master_slave'}},
                                         network='dbaas-network',
+                                        environment=['MONGO_ID='+mongo_container_id],
                                         links={'rmq_host': 'rmq', mongo_container_id: 'mongo'},
                                         restart_policy={"Name": "on-failure", "MaximumRetryCount": 5},
                                         command='sh -c "sleep 15 && python -u master_slave.py"',
@@ -79,12 +80,20 @@ def init_scale_watch():
     while True:
         cycle += 1
         print(" [sw] Spawn watch cycle", cycle)
+
+        if(cycle==1):
+            new_list = spawn_pair(2)
+            spawned_record.extend(new_list)
+            print(" [sw] Init spawn contianers with IDs", new_list) 
+            for pair in new_list:
+                container = containers_col.find_one_and_update({"name": "default"}, {"$push": {"containers": {"mongo": pair[0], "slave": pair[1]}}}, upsert=True)
+
         res = counts_col.find_one({"name": "default"})
         count = res['count']
         print(" [sw] Count is", count)
         to_spawn = count // 20
 
-        delta = to_spawn - newly_spawned_pairs
+        delta = 2 + to_spawn - newly_spawned_pairs
         if(delta>0):
             new_list = spawn_pair(abs(delta))
             spawned_record.extend(new_list)

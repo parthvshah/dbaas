@@ -22,6 +22,7 @@ def query_os():
     
     return curState
 
+# id, name, pid
 if __name__ == "__main__":
     while True:
         response = query_os()

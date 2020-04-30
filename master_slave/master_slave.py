@@ -11,6 +11,7 @@ import socket
 import logging
 import subprocess
 import os
+from time import sleep
 
 logging.basicConfig()
 
@@ -25,20 +26,28 @@ zk = KazooClient(hosts='zoo')
 zk.start()
 myid = str(socket.gethostname())
 
-def my_listener(state):
-    if state == KazooState.LOST:
-        # Register somewhere that the session was lost
-        print(" [ms] Connection error - lost")
+# Mongo setup
 
-    elif state == KazooState.SUSPENDED:
-        # Handle being disconnected from Zookeeper
-        print(" [ms] Connection error - suspended")
+MONGO_ID = os.getenv('MONGO_ID')
+print(" [ms] Environ:", MONGO_ID)
 
-    else:
-        # Handle being connected/reconnected to Zookeeper
-        print(" [ms] Connected to zoo")
+mongo_pid_arr = []
+MONGO_NAME = ""
+with open("PID.file",) as msFile:
+    mongo_pid_arr = json.load(msFile)
+    for container in mongo_pid_arr:
+        for field in container:
+            if(MONGO_ID == field):
+                MONGO_NAME = container[1]
+                break
 
-zk.add_listener(my_listener)
+print(" [ms] Name:", MONGO_NAME)
+
+client = MongoClient(MONGO_NAME)
+db = client.dbaas_db
+Ride = db.rides
+User = db.users
+Model = db.users
 
 def id_helper(myid):
     pid_arr = []
@@ -163,39 +172,24 @@ def on_sync(ch, method, properties, body):
 
     print(" [m] Wrote data on sync -- %r" % response)
 
-def master_mode(re_election=False):
+def master_mode():
     print(" [m] Master mode")
    
     zk.create("/master/"+str(id_helper(myid)), b"master", ephemeral=True, makepath=True)
     print(" [m] Zookeper master node created")
-    
-    client = MongoClient('mongo_1')
-    db = client.dbaas_db
-    Ride = db.rides
-    User = db.users
-    Model = db.users
 
     channel.queue_declare(queue='write_rpc')
     channel.exchange_declare(exchange='sync', exchange_type='fanout')
     channel.basic_qos(prefetch_count=1)
     channel.basic_consume(queue='write_rpc', on_message_callback=on_request_write)
     print(" [x] Awaiting requests write_rpc_requests")
-    if(re_election):
-        pass
-    else:
-        channel.start_consuming()
+    channel.start_consuming()
 
 def slave_mode():
     print(" [s] Slave mode")
     
     zk.create("/slave/"+str(id_helper(myid)), b"slave", ephemeral=True, makepath=True)
-    print(" [s] Zookeper slave node created") 
-
-    client = MongoClient('mongo_2')
-    db = client.dbaas_db
-    Ride = db.rides
-    User = db.users
-    Model = db.users
+    print(" [s] Zookeper slave node created")
 
     channel.queue_declare(queue='read_rpc')
     channel.exchange_declare(exchange='sync', exchange_type='fanout')
@@ -227,9 +221,10 @@ def watch_node(data, stat):
         
 
 # For init
-if(zk.exists('/election/master')):
-    slave_mode()
-else:
-    master_pid = str(id_helper(myid))
-    zk.create("/election/master", master_pid.encode('utf-8'), ephemeral=True, makepath=True)
-    master_mode()
+while True:
+    if(zk.exists('/election/master')):
+        slave_mode()
+    else:
+        master_pid = str(id_helper(myid))
+        zk.create("/election/master", master_pid.encode('utf-8'), ephemeral=True, makepath=True)
+        master_mode()
