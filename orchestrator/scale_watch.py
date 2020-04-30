@@ -81,6 +81,7 @@ def init_scale_watch():
         cycle += 1
         print(" [sw] Spawn watch cycle", cycle)
 
+        # For init
         if(cycle==1):
             new_list = spawn_pair(2)
             spawned_record.extend(new_list)

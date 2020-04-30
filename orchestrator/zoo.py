@@ -29,6 +29,7 @@ def conduct_election():
     dec_pid = str(int_children[0])
 
     zk.create("/election/master", dec_pid.encode('utf-8'), ephemeral=True, makepath=True)
+    # TODO: Spawn a slave
 
 if __name__ == "__main__":
     retry_count = 0

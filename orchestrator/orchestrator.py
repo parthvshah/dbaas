@@ -136,6 +136,22 @@ def send_to_slaves():
     else:
         return response, 200
 
+@app.route('/api/v1/worker/list', methods = ['GET'])
+def worker_list():
+
+    return response, 200
+
+@app.route('/api/v1/crash/master', methods = ['POST'])
+def crash_master():
+
+    return response, 200
+
+@app.route('/api/v1/crash/slave', methods = ['POST'])
+def crash_slave():
+    
+    return response, 200
+
+
 if __name__ == '__main__':
     # app.run(debug=True, host='0.0.0.0')
     manager.run()
