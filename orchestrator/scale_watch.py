@@ -47,7 +47,7 @@ def spawn_pair(number):
                                         environment=['MONGO_ID='+mongo_container_id],
                                         links={'rmq_host': 'rmq', mongo_container_id: 'mongo'},
                                         restart_policy={"Name": "on-failure", "MaximumRetryCount": 5},
-                                        command='sh -c "sleep 15 && python -u master_slave.py"',
+                                        command='sh -c "sleep 30 && chmod a+x run.sh && ./run.sh"',
                                         detach=True)
         ids.append((mongo_container_id, slave_container.id))
     global newly_spawned_pairs

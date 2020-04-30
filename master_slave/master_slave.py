@@ -203,22 +203,6 @@ def slave_mode():
     print(" [s] Awaiting read_rpc requests")
     channel.start_consuming()
 
-# For switch
-@zk.DataWatch("/election/master")
-def watch_node(data, stat):
-    try:
-        master_watch_pid = data.decode("utf-8")
-    except:
-        master_watch_pid = -1
-
-    if(id_helper(myid) == master_watch_pid):
-        print(" [ms] I am master.")
-        if(zk.exists("/slave/"+str(id_helper(myid)))):
-            print(" [ms] Switching to master.")
-            # os.execl(sys.executable, 'python', __file__, *sys.argv[1:])
-            exit()
-        
-
 # For init
 if(zk.exists('/election/master')):
     slave_mode()

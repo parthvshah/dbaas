@@ -32,16 +32,18 @@ def conduct_election():
 
 if __name__ == "__main__":
     retry_count = 0
+    retry_limit = 10
     while True:
         try:
             data, stat = zk.get("/election/master")
             print(" [z] Master is", data.decode("utf-8"))
             retry_count = 0
+            retry_limit = 2
         except:
             retry_count += 1
             print(" [z] Retrying. Count", retry_count)
 
-            if(retry_count==5):
+            if(retry_count==retry_limit):
                 conduct_election()
                 retry_count = 0
 
