@@ -27,7 +27,6 @@ zk.start()
 myid = str(socket.gethostname())
 
 # Mongo setup
-
 MONGO_ID = os.getenv('MONGO_ID')
 print(" [ms] Environ:", MONGO_ID)
 
@@ -182,7 +181,7 @@ def master_mode():
     channel.exchange_declare(exchange='sync', exchange_type='fanout')
     channel.basic_qos(prefetch_count=1)
     channel.basic_consume(queue='write_rpc', on_message_callback=on_request_write)
-    print(" [x] Awaiting requests write_rpc_requests")
+    print(" [m] Awaiting requests write_rpc_requests")
     channel.start_consuming()
 
 def slave_mode():
@@ -221,10 +220,9 @@ def watch_node(data, stat):
         
 
 # For init
-while True:
-    if(zk.exists('/election/master')):
-        slave_mode()
-    else:
-        master_pid = str(id_helper(myid))
-        zk.create("/election/master", master_pid.encode('utf-8'), ephemeral=True, makepath=True)
-        master_mode()
+if(zk.exists('/election/master')):
+    slave_mode()
+else:
+    master_pid = str(id_helper(myid))
+    zk.create("/election/master", master_pid.encode('utf-8'), ephemeral=True, makepath=True)
+    master_mode()

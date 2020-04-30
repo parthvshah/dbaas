@@ -36,6 +36,7 @@ if __name__ == "__main__":
         try:
             data, stat = zk.get("/election/master")
             print(" [z] Master is", data.decode("utf-8"))
+            retry_count = 0
         except:
             retry_count += 1
             print(" [z] Retrying. Count", retry_count)
