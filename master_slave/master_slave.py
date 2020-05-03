@@ -3,7 +3,6 @@ import uuid
 import pika
 import pymongo
 from pymongo import MongoClient
-from bson.json_util import dumps, loads
 import json
 import sys
 from kazoo.client import KazooClient, KazooState
@@ -114,7 +113,7 @@ def on_request_write(ch, method, props, body):
     ch.basic_ack(delivery_tag=method.delivery_tag)
     #send to sync once
     ch.basic_publish(exchange='sync', routing_key='', body=body) #send to sync exchange
-    print(" [m] Sent %r" % response)
+    print(" [m] Sent to sync: %r" % body)
 
 def readData(req):
     req = json.loads(req)
@@ -138,8 +137,13 @@ def readData(req):
         except:
             return json.dumps({ "success": False, "message": "Find error." })
 
-        print(" [s] Accessed records;", dumps(results))
-        return dumps(results)
+        return_arr = []
+        for result in results:
+            result['_id'] = str(result['_id'])
+            return_arr.append(result)
+
+        print(" [s] Accessed records;", json.dumps(return_arr))
+        return json.dumps(return_arr)
         
     else:
         return json.dumps({ "success": False, "message": "Model cannot be blank." })
@@ -158,7 +162,7 @@ def on_request_read(ch, method, props, body):
 def on_sync(ch, method, properties, body):
     response = writeData(body)
 
-    print(" [m] Wrote data on sync -- %r" % response)
+    print(" [m] Wrote data on sync: %r" % response)
 
 def master_mode():
     print(" [m] Master mode")
