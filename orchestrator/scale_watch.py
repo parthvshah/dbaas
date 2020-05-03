@@ -2,6 +2,7 @@ import docker
 from time import sleep
 from pymongo import MongoClient
 import json
+from random import randint
 
 from kazoo.client import KazooClient, KazooState
 
@@ -28,28 +29,34 @@ def get_stats():
 def spawn_pair(number):
     ids = []
     for i in range(number):
+        generated_mongo_name = 'new_mongo_'+str(randint(0,999))
         mongo_container = client.containers.run('mongo',
-                                            #name='new_mongo',
+                                            name=generated_mongo_name,
                                             volumes={PATH+'/orchestrator': {'bind': '/data'}},
                                             network='dbaas-network',
+                                            entrypoint='mongod --bind_ip_all',
                                             restart_policy={"Name": "on-failure", "MaximumRetryCount": 5},
                                             detach=True)
         
         mongo_container_id = mongo_container.id
+        mongo_container_name = mongo_container.name
+
         sleep(5)
         output = mongo_container.exec_run('bash -c "cd /data && mongorestore --archive="db-dump" --nsFrom="dbaas_db.*" --nsTo="dbaas_db.*""')
 
+        generated_ms_name = 'new_ms_'+str(randint(0,999))
         image = client.images.build(path='/master_slave')
         slave_container = client.containers.run(image[0],
-                                        # name='new_master_slave',
+                                        name=generated_ms_name,
                                         volumes={PATH+'/master_slave': {'bind': '/master_slave'}},
                                         network='dbaas-network',
-                                        environment=['MONGO_ID='+mongo_container_id],
-                                        links={'rmq_host': 'rmq', mongo_container_id: 'mongo'},
+                                        environment=['MONGO_NAME='+mongo_container_name],
+                                        links={'rmq_host': 'rmq', mongo_container_name: 'mongo'},
                                         restart_policy={"Name": "on-failure", "MaximumRetryCount": 5},
                                         command='sh -c "sleep 30 && chmod a+x run.sh && ./run.sh"',
                                         detach=True)
         ids.append((mongo_container_id, slave_container.id))
+
     global newly_spawned_pairs
     newly_spawned_pairs += number
     return ids

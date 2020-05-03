@@ -4,7 +4,6 @@ import pika
 import pymongo
 from pymongo import MongoClient
 import json
-from bson.json_util import dumps
 import sys
 from kazoo.client import KazooClient, KazooState
 import socket
@@ -27,20 +26,8 @@ zk.start()
 myid = str(socket.gethostname())
 
 # Mongo setup
-MONGO_ID = os.getenv('MONGO_ID')
-print(" [ms] Environ:", MONGO_ID)
-
-mongo_pid_arr = []
-MONGO_NAME = ""
-with open("PID.file",) as msFile:
-    mongo_pid_arr = json.load(msFile)
-    for container in mongo_pid_arr:
-        for field in container:
-            if(MONGO_ID == field):
-                MONGO_NAME = container[1]
-                break
-
-print(" [ms] Name:", MONGO_NAME)
+MONGO_NAME = os.getenv('MONGO_NAME')
+print(" [ms] Environ:", MONGO_NAME)
 
 client = MongoClient(MONGO_NAME)
 db = client.dbaas_db
@@ -150,8 +137,9 @@ def readData(req):
         except:
             return json.dumps({ "success": False, "message": "Find error." })
 
-        print(" [s] Accessed records")
-        return dumps(results)
+        print(" [s] Accessed records;", list(results))
+        # return json.dumps({ "success": False, "message": "Find error." })
+        return json.dumps(list(results))
         
     else:
         return json.dumps({ "success": False, "message": "Model cannot be blank." })

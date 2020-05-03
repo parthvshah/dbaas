@@ -18,8 +18,23 @@ db = myclient['orch']
 counts_col = db['counts']
 containers_col = db['containers']
 
+from kazoo.client import KazooClient, KazooState
+
+# Zookeper setup
+zk = KazooClient(hosts='zoo')
+zk.start()
+
 import docker
 client = docker.from_env()
+
+def pid_helper(myid):
+    pid_arr = []
+    with open("PID.file",) as oFile:
+        pid_arr = json.load(oFile)
+        for container in pid_arr:
+            for field in container:
+                if(str(myid) == str(field)):
+                    return container[1]
 
 class CustomServer(Server):
     def __call__(self, app, *args, **kwargs):
@@ -112,9 +127,21 @@ def send_to_master():
     async_res = pool.apply_async(write_rpc.call, (json.dumps(content),))
     response = async_res.get().decode('utf8')
 
-    master_mongo = client.containers.get('master_mongo')
-    output = master_mongo.exec_run('bash -c "mongodump --archive="/data/db-dump" --db=dbaas_db"')
-    sleep(1)
+    master_pid = ""
+    if(zk.exists("/election/master")):
+        data, stat = zk.get("election/master")
+        if(data):
+            master_pid = str(data.decode('utf-8'))
+
+    master_name = ""
+    if(len(master_pid)!=0):
+        master_name = str(pid_helper(master_pid))
+    
+    if(len(master_name)!=0):
+        master_mongo = client.containers.get(master_name)
+        output = master_mongo.exec_run('bash -c "mongodump --archive="/data/db-dump" --db=dbaas_db"')
+        print(" [o] Dumped DB.")
+        sleep(1)
 
     if(not response):
         return '', 204 
