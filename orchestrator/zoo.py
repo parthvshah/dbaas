@@ -1,12 +1,13 @@
 from kazoo.client import KazooClient, KazooState
 from time import sleep
+from scale_watch import spawn_pair
 import json
 import uuid
 
 # Zookeper setup
 zk = KazooClient(hosts='zoo')
 zk.start()
-
+client = docker.from_env() #get client
 def id_helper(myid):
     pid_arr = []
     with open("PID.file",) as zFile:
@@ -29,7 +30,9 @@ def conduct_election():
     dec_pid = str(int_children[0])
 
     zk.create("/election/master", dec_pid.encode('utf-8'), ephemeral=True, makepath=True)
+    spawn_pair(1)
     # TODO: Spawn a slave
+
 
 if __name__ == "__main__":
     retry_count = 0
