@@ -165,19 +165,52 @@ def send_to_slaves():
 
 @app.route('/api/v1/worker/list', methods = ['GET'])
 def worker_list():
+    data = get_stats()
+    arr = []
 
-    return response, 200
+    for i in range(len(data)):
+        if(data[i][2][:6]=="new_ms"):
+            if(is_a_slave):  #implement
+                arr.append(int(data[i][2]))
+    arr.sort()
+   
+    # print(arr)
+    return jsonify(arr), 200
 
 @app.route('/api/v1/crash/master', methods = ['POST'])
 def crash_master():
+    data = get_stats()
+    arr = []
+    for i in range(len(data)):
+        if(data[i][1][0:6]=="new_ms" and is_a_master): #implement
+                pid=data[i][2]
+                mongo_pid=get_associated_mongo_db(pid) #implement
+                os.kill(pid, signal.SIGTERM)
+                os.kill(mongo_pid,signal.SIGTERM)
 
-    return response, 200
+    return 200
 
 @app.route('/api/v1/crash/slave', methods = ['POST'])
 def crash_slave():
-    
-    return response, 200
+    data = get_stats()
+    arr = []
+    for i in len(data):
+        if(data[i][1][0:6]=="new_ms" and is_a_slave) #implement
+            arr.append(int(data[i][2]))
+    pid = max(arr) #highest pid is killed
+    mongo_pid=get_associated_mongo_db(pid) #implement
+    os.kill(pid, signal.SIGTERM)
+    os.kill(mongo_pid,signal.SIGTERM)
+    return 200
 
+def get_stats():
+    data = None
+    with open('./PID.file') as iFile:
+        try:
+            data = json.load(iFile)
+        except:
+            pass
+    return data
 
 if __name__ == '__main__':
     # app.run(debug=True, host='0.0.0.0')
