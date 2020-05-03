@@ -1,3 +1,4 @@
+bson
 pymongo 
 pika
 kazoo

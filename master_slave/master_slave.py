@@ -3,6 +3,7 @@ import uuid
 import pika
 import pymongo
 from pymongo import MongoClient
+from bson.json_util import dumps, loads
 import json
 import sys
 from kazoo.client import KazooClient, KazooState
@@ -137,9 +138,8 @@ def readData(req):
         except:
             return json.dumps({ "success": False, "message": "Find error." })
 
-        print(" [s] Accessed records;", list(results))
-        # return json.dumps({ "success": False, "message": "Find error." })
-        return json.dumps(list(results))
+        print(" [s] Accessed records;", dumps(results))
+        return dumps(results)
         
     else:
         return json.dumps({ "success": False, "message": "Model cannot be blank." })
@@ -153,6 +153,7 @@ def on_request_read(ch, method, props, body):
                      properties=pika.BasicProperties(correlation_id = props.correlation_id),
                      body=response)
     ch.basic_ack(delivery_tag=method.delivery_tag)
+    print(" [s] Sent %r" % response)
 
 def on_sync(ch, method, properties, body):
     response = writeData(body)
