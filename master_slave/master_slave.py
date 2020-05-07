@@ -180,7 +180,7 @@ def master_mode():
 def slave_mode():
     print(" [s] Slave mode")
     
-    zk.create("/slave/"+str(id_helper(myid)), b"slave", ephemeral=True, makepath=True)
+    zk.create("/slave/"+str(id_helper(myid)), MONGO_NAME.encode('utf-8'), ephemeral=True, makepath=True)
     print(" [s] Zookeper slave node created")
 
     channel.queue_declare(queue='read_rpc')

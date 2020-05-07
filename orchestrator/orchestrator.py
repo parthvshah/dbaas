@@ -34,6 +34,7 @@ def pid_helper(myid):
         for container in pid_arr:
             for field in container:
                 if(str(myid) == str(field)):
+                    # returns name of container given pid
                     return container[1]
 
 class CustomServer(Server):
@@ -165,18 +166,54 @@ def send_to_slaves():
 
 @app.route('/api/v1/worker/list', methods = ['GET'])
 def worker_list():
+    children = zk.get_children("/slave")
+    pids = []
+    for child in children:
+        pids.append(int(child))
 
-    return response, 200
+    masters = zk.get_children("/master")
+    for master in masters:
+        pids.append(int(master))
+    
+    response = sorted(pids)
+    print(" [o] PIDs returned.")
+
+    return json.dumps(response), 200
 
 @app.route('/api/v1/crash/master', methods = ['POST'])
 def crash_master():
+    data, stat = zk.get("/election/master")
+    master_name = pid_helper(data.decode('utf-8'))
+    master_container = client.containers.get(master_name)
+    master_container.stop()
 
-    return response, 200
+    print(" [o] Master Stopped;", str(master_name))
+    response = []
+    return json.dumps(response), 200
 
 @app.route('/api/v1/crash/slave', methods = ['POST'])
 def crash_slave():
-    
-    return response, 200
+    children = zk.get_children("/slave")
+    pids = []
+    for child in children:
+        pids.append(int(child))
+
+    sorted_pids = sorted(pids)
+    stop_pid = sorted_pids[0]
+    stop_ms_name = pid_helper(stop_pid)
+
+    stop_ms_container = client.containers.get(stop_ms_name)
+    stop_ms_container.stop()
+
+    data, stat = zk.get("/slave/"+str(stop_pid))
+    stop_mongo_name = pid_helper(data.decode('utf-8'))
+
+    stop_mongo_container = client.containers.get(stop_mongo_name)
+    stop_mongo_container.stop()
+
+    print(" [o] Slave Stopped;", str(stop_ms_name))
+    response = []
+    return json.dumps(response), 200
 
 
 if __name__ == '__main__':

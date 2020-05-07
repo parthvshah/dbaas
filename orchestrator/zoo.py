@@ -25,11 +25,12 @@ def conduct_election():
     for child in children:
         int_children.append(int(child))
 
-    int_children = sorted(int_children)
-    dec_pid = str(int_children[0])
+    sorted_int_children = sorted(int_children)
+    dec_pid = str(sorted_int_children[0])
 
     zk.create("/election/master", dec_pid.encode('utf-8'), ephemeral=True, makepath=True)
     # TODO: Spawn a slave
+
 
 if __name__ == "__main__":
     retry_count = 0
