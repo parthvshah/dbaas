@@ -2,10 +2,17 @@ from kazoo.client import KazooClient, KazooState
 from time import sleep
 import json
 import uuid
+import docker
+
+from scale_watch import spawn_pair_export
 
 # Zookeper setup
 zk = KazooClient(hosts='zoo')
 zk.start()
+
+# Docker setup
+client = docker.from_env()
+PATH = '/home/parth/Documents/College/CC/Project/Database-as-a-Service'
 
 def id_helper(myid):
     pid_arr = []
@@ -29,7 +36,8 @@ def conduct_election():
     dec_pid = str(sorted_int_children[0])
 
     zk.create("/election/master", dec_pid.encode('utf-8'), ephemeral=True, makepath=True)
-    # TODO: Spawn a slave
+    new_list = spawn_pair_export(1, PATH)
+    print(" [z] Replaced master with slave containers with IDs", new_list) 
 
 
 if __name__ == "__main__":
