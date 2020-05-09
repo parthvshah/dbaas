@@ -1,2 +1,4 @@
 .vscode
 /orchestrator/__pycache__
+/orchestrator/PID.file
+/master_slave/PID.file
