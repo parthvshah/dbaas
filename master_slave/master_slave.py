@@ -96,13 +96,14 @@ def writeData(req):
                 Model.find_one_and_update(query, parameters)
             except:
                 return json.dumps({ "success": False, "message": "Find one and update error." })
-                
-        return json.dumps({ "success": True, "message": "DB write done" })
         if(operation == "clear"):
             try:
                  client.drop_database(db)
             except:
                 return json.dumps({ "success": False, "message": "Failed to clear total db." })
+                
+        return json.dumps({ "success": True, "message": "DB write done" })
+        
 
 
     else:
