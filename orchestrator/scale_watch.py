@@ -53,7 +53,7 @@ def spawn_pair_export(number, PATH):
                                         environment=['MONGO_NAME='+mongo_container_name],
                                         links={'rmq_host': 'rmq', mongo_container_name: 'mongo'},
                                         restart_policy={"Name": "on-failure", "MaximumRetryCount": 5},
-                                        command='sh -c "sleep 30 && chmod a+x run.sh && ./run.sh"',
+                                        command='sh -c "sleep 5 && chmod a+x run.sh && ./run.sh"',
                                         detach=True)
         ids.append((mongo_container_id, slave_container.id))
 
@@ -88,7 +88,7 @@ def spawn_pair(number):
                                         environment=['MONGO_NAME='+mongo_container_name],
                                         links={'rmq_host': 'rmq', mongo_container_name: 'mongo'},
                                         restart_policy={"Name": "on-failure", "MaximumRetryCount": 5},
-                                        command='sh -c "sleep 30 && chmod a+x run.sh && ./run.sh"',
+                                        command='sh -c "sleep 5 && chmod a+x run.sh && ./run.sh"',
                                         detach=True)
         ids.append((mongo_container_id, slave_container.id))
 
@@ -119,6 +119,7 @@ def init_scale_watch():
 
     set_count = counts_col.find_one_and_update({"name": "default"}, {"$set": {"count": 0}}, upsert=True)
 
+    sleep(60)
     while True:
         cycle += 1
         print(" [sw] Spawn watch cycle", cycle)

@@ -22,7 +22,7 @@ services:
     build:
         context: ./orchestrator
         dockerfile: Dockerfile
-    command: sh -c "sleep 30 && chmod a+x run.sh && ./run.sh"
+    command: sh -c "sleep 15 && chmod a+x run.sh && ./run.sh"
     ports:
       - "5000:5000"
     volumes:
