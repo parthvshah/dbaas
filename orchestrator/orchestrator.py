@@ -214,6 +214,16 @@ def crash_slave():
     print(" [o] Slave Stopped;", str(stop_ms_name))
     response = []
     return json.dumps(response), 200
+@app.route('/api/v1/clear/', methods = ['POST'])
+def clear_db():
+    clear_rpc = WriteRpcClient()
+    async_res = pool.apply_async(clear_rpc.call, (json.dumps(content),))
+    response = async_res.get().decode('utf8')
+    return json.dumps(response), 200
+
+
+
+
 
 
 if __name__ == '__main__':

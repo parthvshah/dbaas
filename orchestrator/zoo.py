@@ -12,7 +12,7 @@ zk.start()
 
 # Docker setup
 client = docker.from_env()
-PATH = '/home/parth/Documents/College/CC/Project/Database-as-a-Service'
+PATH = '/home/ubuntu/Database-as-a-Service'
 
 def id_helper(myid):
     pid_arr = []

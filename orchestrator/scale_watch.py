@@ -8,7 +8,7 @@ from kazoo.client import KazooClient, KazooState
 
 
 client = docker.from_env()
-PATH = '/home/parth/Documents/College/CC/Project/Database-as-a-Service'
+PATH = '/home/ubuntu/Database-as-a-Service'
 spawned_record = []
 newly_spawned_pairs = 0
 
