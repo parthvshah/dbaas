@@ -219,6 +219,7 @@ def crash_slave():
     return json.dumps(response), 200
 @app.route('/api/v1/clear/', methods = ['POST'])
 def clear_db():
+    content = request.get_json()
     clear_rpc = WriteRpcClient()
     async_res = pool.apply_async(clear_rpc.call, (json.dumps(content),))
     response = async_res.get().decode('utf8')

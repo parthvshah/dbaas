@@ -64,8 +64,8 @@ def writeData(req):
         query = {}
 
     if(model and operation):
-        if(not parameters):
-            return json.dumps({ "success": False, "message": "Parameters cannot be blank." })
+        # if(not parameters):
+        #     return json.dumps({ "success": False, "message": "Parameters cannot be blank." })
 
         if (operation == "update" and not query):
             return json.dumps({ "success": False, "message": "Query cannot be blank." })
