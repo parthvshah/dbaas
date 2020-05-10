@@ -24,7 +24,7 @@ services:
         dockerfile: Dockerfile
     command: sh -c "sleep 15 && chmod a+x run.sh && ./run.sh"
     ports:
-      - "5000:5000"
+      - "80:80"
     volumes:
         - ./orchestrator:/app
         - ./master_slave:/master_slave
