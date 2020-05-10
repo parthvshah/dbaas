@@ -122,7 +122,7 @@ def hello():
 @app.route('/api/v1/db/write',methods = ['POST'])
 def send_to_master():
     content = request.get_json()
-    # print("Write request:", content)
+    print(" [debug] Write request:", content)
 
     write_rpc = WriteRpcClient()
     async_res = pool.apply_async(write_rpc.call, (json.dumps(content),))
@@ -142,9 +142,9 @@ def send_to_master():
         master_mongo = client.containers.get(master_name)
         output = master_mongo.exec_run('bash -c "mongodump --archive="/data/db-dump" --db=dbaas_db"')
         print(" [o] Dumped DB.")
-        sleep(1)
+        sleep(2)
 
-    # print("Write response:", response)
+    print(" [debug] Write response:", response)
     if(not response):
         return '', 204 
     else:
@@ -153,15 +153,16 @@ def send_to_master():
 @app.route('/api/v1/db/read', methods = ['POST'])
 def send_to_slaves():
     content = request.get_json()
-    # print("Read request:", content)
+    print(" [debug] Read request:", content)
 
     read_rpc = ReadRpcClient()
     async_res = pool.apply_async(read_rpc.call, (json.dumps(content),))
     response = async_res.get().decode('utf8')
 
     count = counts_col.find_one_and_update({"name": "default"}, {"$inc": {"count": 1}})
+    sleep(2)
 
-    # print("Read response:", response)
+    print(" [debug] Read response:", response)
     if(not response):
         return '', 204 
     else:
@@ -224,7 +225,7 @@ def clear_db():
     clear_rpc = WriteRpcClient()
     async_res = pool.apply_async(clear_rpc.call, (json.dumps(content),))
     response = async_res.get().decode('utf8')
-    return json.dumps(response), 200
+    return response, 200
 
 if __name__ == '__main__':
     # app.run(debug=True, host='0.0.0.0')
