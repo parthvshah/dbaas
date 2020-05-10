@@ -57,7 +57,7 @@ def writeData(req):
     try:
         operation = req['operation']
     except KeyError:
-        operation = ''
+        operation = 'clear'
     try:
         query = req['query']
     except KeyError:
