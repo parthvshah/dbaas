@@ -218,7 +218,7 @@ def crash_slave():
     response = []
     return json.dumps(response), 200
 
-@app.route('/api/v1/clear/', methods = ['POST'])
+@app.route('/api/v1/clear', methods = ['POST'])
 def clear_db():
     content = request.get_json()
     clear_rpc = WriteRpcClient()
