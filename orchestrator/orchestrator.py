@@ -137,7 +137,7 @@ def send_to_master():
             master_mongo_name = str(data.decode('utf-8'))
     
     print(" [o] Master mongo name:", master_mongo_name)
-    if(len(master_name)!=0):
+    if(len(master_mongo_name)!=0):
         master_mongo = client.containers.get(master_mongo_name)
         output = master_mongo.exec_run('bash -c "mongodump --archive="/data/db-dump" --db=dbaas_db"')
         print(" [o] Dumped DB.", output)
