@@ -130,10 +130,10 @@ def send_to_master():
     async_res = pool.apply_async(write_rpc.call, (json.dumps(content),))
     response = async_res.get().decode('utf8')
 
-    master_pid = ""
+    master_mongo_name = ""
     if(zk.exists("/master")):
-        print(" [o] Master exists")
-        data, stat = zk.get("/master")
+        children = zk.get_children("/master")
+        data, stat = zk.get("/master/"+str(children[0]))
         print(" [o] Data", data)
         if(data):
             master_mongo_name = str(data.decode('utf-8'))

@@ -175,7 +175,7 @@ def on_sync(ch, method, properties, body):
     print(" [s] Wrote data on sync: %r" % response)
 
 def master_mode():
-    print(" [m] Master mode")
+    print(" [m] Master mode. Mongo name:", MONGO_NAME)
    
     zk.create("/master/"+str(id_helper(myid)), MONGO_NAME.encode('utf-8'), ephemeral=True, makepath=True)
     print(" [m] Zookeper master node created")
@@ -188,7 +188,7 @@ def master_mode():
     channel.start_consuming()
 
 def slave_mode():
-    print(" [s] Slave mode")
+    print(" [s] Slave mode. Mongo name:", MONGO_NAME)
     
     zk.create("/slave/"+str(id_helper(myid)), MONGO_NAME.encode('utf-8'), ephemeral=True, makepath=True)
     print(" [s] Zookeper slave node created")
