@@ -130,8 +130,8 @@ def init_scale_watch():
             print(" [sw] Init spawn containers with IDs", new_list) 
             for pair in new_list:
                 container = containers_col.find_one_and_update({"name": "default"}, {"$push": {"containers": {"mongo": pair[0], "slave": pair[1]}}}, upsert=True)
-
-        sleep(30)
+            sleep(30)
+        
         res = counts_col.find_one({"name": "default"})
         count = res['count']
         print(" [sw] Count is", count)
