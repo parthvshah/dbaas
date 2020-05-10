@@ -140,10 +140,11 @@ def send_to_master():
     if(len(master_pid)!=0):
         master_name = str(pid_helper(master_pid))
     
+    print(" [o] Master mongo name:", master_name)
     if(len(master_name)!=0):
         master_mongo = client.containers.get(master_name)
         output = master_mongo.exec_run('bash -c "mongodump --archive="/data/db-dump" --db=dbaas_db"')
-        print(" [o] Dumped DB.")
+        print(" [o] Dumped DB.", output)
         sleep(1)
 
     print(" [debug] Write response:", response)
