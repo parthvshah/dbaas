@@ -119,7 +119,7 @@ def init_scale_watch():
 
     set_count = counts_col.find_one_and_update({"name": "default"}, {"$set": {"count": 0}}, upsert=True)
 
-    sleep(60)
+    sleep(80)
     while True:
         cycle += 1
         print(" [sw] Spawn watch cycle", cycle)

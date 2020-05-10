@@ -42,7 +42,7 @@ def conduct_election():
 
 if __name__ == "__main__":
     retry_count = 0
-    retry_limit = 10
+    retry_limit = 15
     while True:
         try:
             data, stat = zk.get("/election/master")
