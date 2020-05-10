@@ -132,9 +132,13 @@ def send_to_master():
 
     master_pid = ""
     if(zk.exists("/master")):
+        print(" [o] Master exists")
         data, stat = zk.get("/master")
+        print(" [o] Data", data)
         if(data):
             master_mongo_name = str(data.decode('utf-8'))
+        else:
+            master_mongo_name = None
     
     print(" [o] Master mongo name:", master_mongo_name)
     if(len(master_mongo_name)!=0):
