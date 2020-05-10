@@ -131,7 +131,7 @@ def send_to_master():
     response = async_res.get().decode('utf8')
 
     master_pid = ""
-    if(zk.exists("/election/master")):
+    if(zk.exists("/master")):
         data, stat = zk.get("election/master")
         if(data):
             master_mongo_name = str(data.decode('utf-8'))
