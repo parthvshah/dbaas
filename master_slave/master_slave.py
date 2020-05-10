@@ -63,6 +63,12 @@ def writeData(req):
     except KeyError:
         query = {}
 
+    if(operation == "clear"):
+        try:
+            client.drop_database(db)
+        except:
+            return json.dumps({ "success": False, "message": "Failed to clear total db." })
+
     if(model and operation):
         # if(not parameters):
         #     return json.dumps({ "success": False, "message": "Parameters cannot be blank." })
@@ -96,15 +102,9 @@ def writeData(req):
                 Model.find_one_and_update(query, parameters)
             except:
                 return json.dumps({ "success": False, "message": "Find one and update error." })
-        if(operation == "clear"):
-            try:
-                 client.drop_database(db)
-            except:
-                return json.dumps({ "success": False, "message": "Failed to clear total db." })
+        
                 
         return json.dumps({ "success": True, "message": "DB write done" })
-        
-
 
     else:
         return json.dumps({ "success": False, "message": "Error: Model and operation cannot be blank." })
