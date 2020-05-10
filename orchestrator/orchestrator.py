@@ -142,7 +142,7 @@ def send_to_master():
         master_mongo = client.containers.get(master_name)
         output = master_mongo.exec_run('bash -c "mongodump --archive="/data/db-dump" --db=dbaas_db"')
         print(" [o] Dumped DB.")
-        sleep(2)
+        sleep(1)
 
     print(" [debug] Write response:", response)
     if(not response):
@@ -160,7 +160,7 @@ def send_to_slaves():
     response = async_res.get().decode('utf8')
 
     count = counts_col.find_one_and_update({"name": "default"}, {"$inc": {"count": 1}})
-    sleep(2)
+    sleep(1)
 
     print(" [debug] Read response:", response)
     if(not response):
@@ -205,17 +205,19 @@ def crash_slave():
     sorted_pids = sorted(pids)
     stop_pid = sorted_pids[0]
     stop_ms_name = pid_helper(stop_pid)
+    print(" [o] Sorted PIDs:", sorted_pids)
 
     stop_ms_container = client.containers.get(stop_ms_name)
     stop_ms_container.stop()
+    print(" [o] Stopped ms named:", str(stop_ms_name))
 
     data, stat = zk.get("/slave/"+str(stop_pid))
     stop_mongo_name = pid_helper(data.decode('utf-8'))
 
     stop_mongo_container = client.containers.get(stop_mongo_name)
     stop_mongo_container.stop()
+    print(" [o] Stopped mongo named:", str(stop_mongo_name))
 
-    print(" [o] Slave Stopped;", str(stop_ms_name))
     response = []
     return json.dumps(response), 200
 

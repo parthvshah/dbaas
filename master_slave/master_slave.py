@@ -68,7 +68,7 @@ def writeData(req):
             client.drop_database(db)
 
             return json.dumps({ "success": True, "message": "DB write done" })
-            
+
         except:
             return json.dumps({ "success": False, "message": "Failed to clear total db." })
 
@@ -172,7 +172,7 @@ def on_request_read(ch, method, props, body):
 def on_sync(ch, method, properties, body):
     response = writeData(body)
 
-    print(" [m] Wrote data on sync: %r" % response)
+    print(" [s] Wrote data on sync: %r" % response)
 
 def master_mode():
     print(" [m] Master mode")

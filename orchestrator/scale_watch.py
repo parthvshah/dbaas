@@ -107,7 +107,9 @@ def down_pair(number):
 
         mongo_container.stop()
         slave_container.stop()
-    
+
+    global newly_spawned_pairs
+    newly_spawned_pairs -= number
     return ids
 
 def init_scale_watch():
@@ -138,6 +140,7 @@ def init_scale_watch():
         to_spawn = count // 20
 
         delta = 2 + to_spawn - newly_spawned_pairs
+        
         if(delta>0):
             new_list = spawn_pair(abs(delta))
             spawned_record.extend(new_list)
