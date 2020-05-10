@@ -48,24 +48,27 @@ def writeData(req):
     req = json.loads(req)
     try:
         model = req['model']
-    except KeyError:
+    except:
         model = ''
     try:
         parameters = req['parameters']
-    except KeyError:
+    except:
         parameters = {}
     try:
         operation = req['operation']
-    except KeyError:
+    except:
         operation = 'clear'
     try:
         query = req['query']
-    except KeyError:
+    except:
         query = {}
 
     if(operation == "clear"):
         try:
             client.drop_database(db)
+
+            return json.dumps({ "success": True, "message": "DB write done" })
+            
         except:
             return json.dumps({ "success": False, "message": "Failed to clear total db." })
 
