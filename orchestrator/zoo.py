@@ -65,8 +65,8 @@ if __name__ == "__main__":
         
         # For slave
         try:
-            data = zk.get_children("/slave")
-            print(" [z] Children are", data.decode("utf-8"))
+            children = zk.get_children("/slave")
+            print(" [z] Children are", children)
             
         except:
             print(" [z] Children not available.")

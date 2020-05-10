@@ -41,7 +41,7 @@ def spawn_pair_export(number, PATH):
         mongo_container_id = mongo_container.id
         mongo_container_name = mongo_container.name
 
-        sleep(5)
+        sleep(3)
         output = mongo_container.exec_run('bash -c "cd /data && mongorestore --archive="db-dump" --nsFrom="dbaas_db.*" --nsTo="dbaas_db.*""')
 
         generated_ms_name = 'new_ms_'+str(randint(0,999))
@@ -53,7 +53,7 @@ def spawn_pair_export(number, PATH):
                                         environment=['MONGO_NAME='+mongo_container_name],
                                         links={'rmq_host': 'rmq', mongo_container_name: 'mongo'},
                                         restart_policy={"Name": "on-failure", "MaximumRetryCount": 5},
-                                        command='sh -c "sleep 5 && chmod a+x run.sh && ./run.sh"',
+                                        command='sh -c "sleep 3 && chmod a+x run.sh && ./run.sh"',
                                         detach=True)
         ids.append((mongo_container_id, slave_container.id))
 
