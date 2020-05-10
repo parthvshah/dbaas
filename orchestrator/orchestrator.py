@@ -132,7 +132,7 @@ def send_to_master():
 
     master_pid = ""
     if(zk.exists("/master")):
-        data, stat = zk.get("election/master")
+        data, stat = zk.get("/master")
         if(data):
             master_mongo_name = str(data.decode('utf-8'))
     
