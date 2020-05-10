@@ -177,7 +177,7 @@ def on_sync(ch, method, properties, body):
 def master_mode():
     print(" [m] Master mode")
    
-    zk.create("/master/"+str(id_helper(myid)), b"master", ephemeral=True, makepath=True)
+    zk.create("/master/"+str(id_helper(myid)), MONGO_NAME.encode('utf-8'), ephemeral=True, makepath=True)
     print(" [m] Zookeper master node created")
 
     channel.queue_declare(queue='write_rpc')
