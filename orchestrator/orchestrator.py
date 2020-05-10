@@ -77,7 +77,7 @@ class ReadRpcClient(object):
             body=request)
         while self.response is None:
             self.connection.process_data_events()
-        print(" [rh] Response", self.response)
+        # print(" [rh] Response", self.response)
         return self.response
         
 class WriteRpcClient(object):
@@ -112,7 +112,7 @@ class WriteRpcClient(object):
             body=request)
         while self.response is None:
             self.connection.process_data_events()
-        print(" [rh] Response", self.response)
+        # print(" [rh] Response", self.response)
         return self.response
 
 @app.route('/')   #demo function

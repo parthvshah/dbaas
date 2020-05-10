@@ -139,8 +139,9 @@ def init_scale_watch():
         print(" [sw] Count is", count)
         to_spawn = count // 20
 
+        print(" [sw] to_spawn:", to_spawn, "newly_spawned_pairs:", newly_spawned_pairs)
         delta = 2 + to_spawn - newly_spawned_pairs
-        
+
         if(delta>0):
             new_list = spawn_pair(abs(delta))
             spawned_record.extend(new_list)
