@@ -27,6 +27,8 @@ zk.start()
 import docker
 client = docker.from_env()
 
+from zoo import replace_ms
+
 def pid_helper(myid):
     pid_arr = []
     with open("PID.file",) as oFile:
@@ -218,6 +220,7 @@ def crash_slave():
     stop_mongo_container.stop()
     print(" [o] Stopped mongo named:", str(stop_mongo_name))
 
+    replace_ms()
     response = []
     return json.dumps(response), 200
 

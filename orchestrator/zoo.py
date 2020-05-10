@@ -37,13 +37,19 @@ def conduct_election():
 
     zk.create("/election/master", dec_pid.encode('utf-8'), ephemeral=True, makepath=True)
     new_list = spawn_pair_export(1, PATH)
-    print(" [z] Replaced master with slave containers with IDs", new_list) 
+    print(" [z] Replaced master with ms containers with IDs", new_list)
+
+def replace_ms():
+    new_list = spawn_pair_export(1, PATH)
+    print(" [z] Replaced slave (crash) with ms containers with IDs", new_list)
 
 
 if __name__ == "__main__":
     retry_count = 0
-    retry_limit = 15
+    retry_limit = 10
     while True:
+
+        # For master
         try:
             data, stat = zk.get("/election/master")
             print(" [z] Master is", data.decode("utf-8"))
@@ -56,5 +62,13 @@ if __name__ == "__main__":
             if(retry_count==retry_limit):
                 conduct_election()
                 retry_count = 0
+        
+        # For slave
+        try:
+            data = zk.get_children("/slave")
+            print(" [z] Children are", data.decode("utf-8"))
+            
+        except:
+            print(" [z] Children not available.")
 
         sleep(10)
