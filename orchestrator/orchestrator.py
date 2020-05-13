@@ -39,6 +39,7 @@ def pid_helper(myid):
                     # returns name of container given pid
                     return container[1]
 
+# Custom server 
 class CustomServer(Server):
     def __call__(self, app, *args, **kwargs):
         return Server.__call__(self, app, *args, **kwargs)
@@ -145,7 +146,7 @@ def send_to_master():
         master_mongo = client.containers.get(master_mongo_name)
         output = master_mongo.exec_run('bash -c "mongodump --archive="/data/db-dump" --db=dbaas_db"')
         print(" [o] Dumped DB.", output)
-        sleep(1)
+        # sleep(1)
 
     print(" [debug] Write response:", response)
     if(not response):
@@ -163,7 +164,7 @@ def send_to_slaves():
     response = async_res.get().decode('utf8')
 
     count = counts_col.find_one_and_update({"name": "default"}, {"$inc": {"count": 1}})
-    sleep(1)
+    # sleep(1)
 
     print(" [debug] Read response:", response)
     if(not response):
@@ -221,6 +222,7 @@ def crash_slave():
     stop_mongo_container.stop()
     print(" [o] Stopped mongo named:", str(stop_mongo_name))
 
+    # TODO: Don't just replace, let zoo do this
     replace_ms()
     response = []
     return json.dumps(response), 200

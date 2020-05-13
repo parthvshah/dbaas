@@ -8,6 +8,7 @@ from kazoo.client import KazooClient, KazooState
 
 
 client = docker.from_env()
+# TODO: Change
 PATH = '/home/ubuntu/Database-as-a-Service'
 spawned_record = []
 newly_spawned_pairs = 0
@@ -57,8 +58,6 @@ def spawn_pair_export(number, PATH):
                                         detach=True)
         ids.append((mongo_container_id, slave_container.id))
 
-    # global newly_spawned_pairs
-    # newly_spawned_pairs += number
     return ids
 
 def spawn_pair(number):
@@ -96,6 +95,7 @@ def spawn_pair(number):
     newly_spawned_pairs += number
     return ids
 
+# TODO: Fix, not the correct way
 def down_pair(number):
     ids = []
     for i in range(number):
@@ -130,8 +130,8 @@ def init_scale_watch():
             new_list = spawn_pair(2)
             spawned_record.extend(new_list)
             print(" [sw] Init spawn containers with IDs", new_list) 
-            for pair in new_list:
-                container = containers_col.find_one_and_update({"name": "default"}, {"$push": {"containers": {"mongo": pair[0], "slave": pair[1]}}}, upsert=True)
+            # for pair in new_list:
+            #     container = containers_col.find_one_and_update({"name": "default"}, {"$push": {"containers": {"mongo": pair[0], "slave": pair[1]}}}, upsert=True)
             sleep(30)
         
         res = counts_col.find_one({"name": "default"})
@@ -146,14 +146,14 @@ def init_scale_watch():
             new_list = spawn_pair(abs(delta))
             spawned_record.extend(new_list)
             print(" [sw] Spawned", delta, "containers with IDs", new_list) 
-            for pair in new_list:
-                container = containers_col.find_one_and_update({"name": "default"}, {"$push": {"containers": {"mongo": pair[0], "slave": pair[1]}}}, upsert=True)
+            # for pair in new_list:
+            #     container = containers_col.find_one_and_update({"name": "default"}, {"$push": {"containers": {"mongo": pair[0], "slave": pair[1]}}}, upsert=True)
         
         if(delta<0):
             down_list = down_pair(abs(delta))
             print(" [sw] Downed", delta, "containers with IDs", down_list) 
-            for pair in down_list:
-                container = containers_col.find_one_and_update({"name": "default"}, {"$pull": {"containers": {"mongo": pair[0], "slave": pair[1]}}})
+            # for pair in down_list:
+            #     container = containers_col.find_one_and_update({"name": "default"}, {"$pull": {"containers": {"mongo": pair[0], "slave": pair[1]}}})
 
 
         set_count = counts_col.find_one_and_update({"name": "default"}, {"$set": {"count": 0}})

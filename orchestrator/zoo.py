@@ -12,6 +12,7 @@ zk.start()
 
 # Docker setup
 client = docker.from_env()
+# TODO: Path
 PATH = '/home/ubuntu/Database-as-a-Service'
 
 def id_helper(myid):
@@ -52,6 +53,7 @@ if __name__ == "__main__":
         # For master
         try:
             data, stat = zk.get("/election/master")
+            # PID print
             print(" [z] Master is", data.decode("utf-8"))
             retry_count = 0
             retry_limit = 2
@@ -64,6 +66,7 @@ if __name__ == "__main__":
                 retry_count = 0
         
         # For slave
+        # TODO: Not doing anything, needs to spawn once slave crashes
         try:
             children = zk.get_children("/slave")
             print(" [z] Children are", children)
