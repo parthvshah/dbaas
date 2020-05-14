@@ -46,10 +46,22 @@ def replace_ms():
 
 
 if __name__ == "__main__":
+    count = 0
     retry_count = 0
     retry_limit = 10
-    while True:
-
+    # For slave
+    try:
+        children_bef = zk.get_children("/slave")
+        @zk.ChildrenWatch("/slave")
+        def watch_children(children):
+            children = zk.get_children("/slave")
+            if children_bef > children:
+                spawn_pair_export(1, PATH)
+    except:
+         print(" [z] Children not available.")
+            
+    while True:        
+        children = zk.get_children("/slave")
         # For master
         try:
             data, stat = zk.get("/election/master")
@@ -64,15 +76,11 @@ if __name__ == "__main__":
             if(retry_count==retry_limit):
                 conduct_election()
                 retry_count = 0
+        sleep(10)
         
         # For slave
         # TODO: Not doing anything, needs to spawn once slave crashes
-        try:
-            @zk.ChildrenWatch("/slave")
-            def watch_children(children):
-                spawn_pair_export(1, PATH)
-            
-        except:
-            print(" [z] Children not available.")
+       
 
-        sleep(10)
+
+        
