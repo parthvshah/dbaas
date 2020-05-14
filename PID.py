@@ -7,13 +7,13 @@ client = docker.from_env()
 
 def query_os():
     stats = []
-    containers = client.containers.list()
+    containers = client.containers.list() #Gets all containers
     for container in containers:
-        stats.append((container.id, container.name))
+        stats.append((container.id, container.name)) #Appends containers to a list called stats
 
     reses = []
     for stat in stats:
-        res = subprocess.check_output(["docker", "inspect", "--format", "{{.State.Pid}}", stat[0]])
+        res = subprocess.check_output(["docker", "inspect", "--format", "{{.State.Pid}}", stat[0]]) #Finds the PID
         reses.append(res)
 
     curState = []

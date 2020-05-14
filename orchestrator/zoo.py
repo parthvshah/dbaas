@@ -24,6 +24,7 @@ def id_helper(myid):
                 if(myid in field):
                     return container[2]
 
+#Checks for master and slave every ten seconds
 def conduct_election():
     print(" [z] Conducting election.")
 
@@ -49,7 +50,7 @@ if __name__ == "__main__":
     retry_count = 0
     retry_limit = 10
     while True:
-
+        #retry count gives time to processes to spawn before election
         # For master
         try:
             data, stat = zk.get("/election/master")

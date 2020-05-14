@@ -25,10 +25,10 @@ def id_helper(myid):
 # For switch
 print(" [~] Setup watch.")
 while True:
-    if(zk.exists("/election/master")):
+    if(zk.exists("/election/master")): #Checks the path
         data, stat = zk.get("election/master")
-        if(data):
-            master_pid = str(data.decode('utf-8'))
+        if(data):#checks if it is the master
+            master_pid = str(data.decode('utf-8')) 
             print(" [~] Master exists;", master_pid)
 
             if((id_helper(myid) == master_pid) and (zk.exists("/slave/"+str(id_helper(myid))))):

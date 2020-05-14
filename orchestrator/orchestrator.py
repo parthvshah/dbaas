@@ -50,6 +50,7 @@ app = Flask(__name__)
 manager = Manager(app)
 manager.add_command('runserver', CustomServer())
 
+#sends data to master or write queue
 @app.route('/api/v1/db/write',methods = ['POST'])
 def send_to_master():
     content = request.get_json()
@@ -57,21 +58,22 @@ def send_to_master():
 
     write_rpc = WriteRpcClient()
     async_res = pool.apply_async(write_rpc.call, (json.dumps(content),))
-    response = async_res.get().decode('utf8')
+    response = async_res.get().decode('utf8') #gets the response from function call in pool
 
     master_mongo_name = ""
     if(zk.exists("/master")):
         children = zk.get_children("/master")
         data, stat = zk.get("/master/"+str(children[0]))
         print(" [o] Data", data)
-        if(data):
-            master_mongo_name = str(data.decode('utf-8'))
+        if(data): 
+            master_mongo_name = str(data.decode('utf-8')) #get associated mongo name
         else:
             master_mongo_name = None
     
     print(" [o] Master mongo name:", master_mongo_name)
     if(len(master_mongo_name)!=0):
         master_mongo = client.containers.get(master_mongo_name)
+        #Dumps the database
         output = master_mongo.exec_run('bash -c "mongodump --archive="/data/db-dump" --db=dbaas_db"')
         print(" [o] Dumped DB.", output)
         # sleep(1)
@@ -82,6 +84,7 @@ def send_to_master():
     else:
         return response, 200
 
+#sends data to slave or read queue
 @app.route('/api/v1/db/read', methods = ['POST'])
 def send_to_slaves():
     content = request.get_json()
@@ -90,7 +93,7 @@ def send_to_slaves():
     read_rpc = ReadRpcClient()
     async_res = pool.apply_async(read_rpc.call, (json.dumps(content),))
     response = async_res.get().decode('utf8')
-
+    #count is to know if we need to spawn new slaves or not
     count = counts_col.find_one_and_update({"name": "default"}, {"$inc": {"count": 1}})
     # sleep(1)
 
@@ -100,14 +103,15 @@ def send_to_slaves():
     else:
         return response, 200
 
+#Get the worker list
 @app.route('/api/v1/worker/list', methods = ['GET'])
 def worker_list():
-    children = zk.get_children("/slave")
+    children = zk.get_children("/slave") #For slave PIDs
     pids = []
     for child in children:
         pids.append(int(child))
 
-    masters = zk.get_children("/master")
+    masters = zk.get_children("/master") #For master PID
     for master in masters:
         pids.append(int(master))
     
@@ -116,6 +120,7 @@ def worker_list():
 
     return json.dumps(response), 200
 
+#To stop master
 @app.route('/api/v1/crash/master', methods = ['POST'])
 def crash_master():
     data, stat = zk.get("/election/master")
@@ -127,6 +132,8 @@ def crash_master():
     response = []
     return json.dumps(response), 200
 
+
+#To stop slave
 @app.route('/api/v1/crash/slave', methods = ['POST'])
 def crash_slave():
     children = zk.get_children("/slave")
@@ -139,7 +146,7 @@ def crash_slave():
     stop_ms_name = pid_helper(stop_pid)
     print(" [o] Sorted PIDs:", sorted_pids)
 
-    stop_ms_container = client.containers.get(stop_ms_name)
+    stop_ms_container = client.containers.get(stop_ms_name) #Stops only associalted mongo
     stop_ms_container.stop()
     print(" [o] Stopped ms named:", str(stop_ms_name))
 
@@ -155,6 +162,7 @@ def crash_slave():
     response = []
     return json.dumps(response), 200
 
+#Clear the db
 @app.route('/api/v1/db/clear', methods = ['POST'])
 def clear_db():
     content = request.get_json()

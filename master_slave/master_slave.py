@@ -26,7 +26,7 @@ zk.start()
 myid = str(socket.gethostname())
 
 # Mongo setup
-MONGO_NAME = os.getenv('MONGO_NAME')
+MONGO_NAME = os.getenv('MONGO_NAME') 
 print(" [ms] Environ:", MONGO_NAME)
 
 client = MongoClient(MONGO_NAME)
@@ -35,7 +35,8 @@ Ride = db.rides
 User = db.users
 Model = db.users
 
-def id_helper(myid):
+#Gets PID
+def id_helper(myid): 
     pid_arr = []
     with open("PID.file",) as msFile:
         pid_arr = json.load(msFile)
@@ -43,7 +44,7 @@ def id_helper(myid):
             for field in container:
                 if(myid in field):
                     return container[2]
-
+#Writes to db
 def writeData(req):
     req = json.loads(req)
     try:
@@ -62,7 +63,7 @@ def writeData(req):
         query = req['query']
     except:
         query = {}
-
+    #clears the db
     if(operation == "clear"):
         try:
             client.drop_database(db)
@@ -71,15 +72,15 @@ def writeData(req):
 
         except:
             return json.dumps({ "success": False, "message": "Failed to clear total db." })
-
+    #checks the model and operation fields
     if(model and operation):
         # if(not parameters):
         #     return json.dumps({ "success": False, "message": "Parameters cannot be blank." })
 
         if (operation == "update" and not query):
             return json.dumps({ "success": False, "message": "Query cannot be blank." })
-
-        if (model):
+        #checks the model and sets it accordingly
+        if (model): 
             if (model == "Ride"):
                 Model = Ride
             if(model == "User"):
@@ -112,6 +113,7 @@ def writeData(req):
     else:
         return json.dumps({ "success": False, "message": "Error: Model and operation cannot be blank." })
 
+#Writes to associated db
 def on_request_write(ch, method, props, body):
     print(" [m] Processing request...on_req_write")
     response = writeData(body)
@@ -120,11 +122,12 @@ def on_request_write(ch, method, props, body):
                      routing_key=props.reply_to,
                      properties=pika.BasicProperties(correlation_id = props.correlation_id),
                      body=response)
-    ch.basic_ack(delivery_tag=method.delivery_tag)
+    ch.basic_ack(delivery_tag=method.delivery_tag) #Sends acknowledgement back to temporary queue
     #send to sync once
     ch.basic_publish(exchange='sync', routing_key='', body=body) #send to sync exchange
     print(" [m] Sent to sync: %r" % body)
 
+#Reads the db
 def readData(req):
     req = json.loads(req)
     try:
@@ -174,42 +177,48 @@ def on_sync(ch, method, properties, body):
 
     print(" [s] Wrote data on sync: %r" % response)
 
+#To run in master mode
 def master_mode():
     print(" [m] Master mode. Mongo name:", MONGO_NAME)
-   
+    #creates master znode
+    #/master/<pid> - associated mongo name
     zk.create("/master/"+str(id_helper(myid)), MONGO_NAME.encode('utf-8'), ephemeral=True, makepath=True)
     print(" [m] Zookeper master node created")
 
     channel.queue_declare(queue='write_rpc')
     channel.exchange_declare(exchange='sync', exchange_type='fanout')
-    channel.basic_qos(prefetch_count=1)
+    channel.basic_qos(prefetch_count=1) #for multiple consumers
+    #master should consume from rpc queue
     channel.basic_consume(queue='write_rpc', on_message_callback=on_request_write)
     print(" [m] Awaiting requests write_rpc_requests")
     channel.start_consuming()
 
+#To run in slave mode
 def slave_mode():
     print(" [s] Slave mode. Mongo name:", MONGO_NAME)
-    
+    #creates slave znode 
+    #/slave/<pid> - associated mongo name
     zk.create("/slave/"+str(id_helper(myid)), MONGO_NAME.encode('utf-8'), ephemeral=True, makepath=True)
     print(" [s] Zookeper slave node created")
 
     channel.queue_declare(queue='read_rpc')
-    channel.exchange_declare(exchange='sync', exchange_type='fanout')
-    channel.basic_qos(prefetch_count=1)
+    channel.exchange_declare(exchange='sync', exchange_type='fanout') #all consumers get all messages
+    channel.basic_qos(prefetch_count=1) #for multiple consumers
     channel.basic_consume(queue='read_rpc', on_message_callback=on_request_read)
     result = channel.queue_declare(queue='', exclusive=True)
     queue_name = result.method.queue #random queue name generated... temporary q
     channel.queue_bind(exchange='sync', queue=queue_name)
     channel.basic_consume(
-        queue=queue_name, on_message_callback=on_sync, auto_ack=True)
+        queue=queue_name, on_message_callback=on_sync, auto_ack=True) #updates slave
 
     print(" [s] Awaiting read_rpc requests")
     channel.start_consuming()
 
 # For init
-if(zk.exists('/election/master')):
+if(zk.exists('/election/master')): #checks if master exists and then runs in slave mode
     slave_mode()
-else:
+else: #becomes the master and runs in master mode
     master_pid = str(id_helper(myid))
+    #/election/master - PID of master
     zk.create("/election/master", master_pid.encode('utf-8'), ephemeral=True, makepath=True)
     master_mode()

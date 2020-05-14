@@ -43,8 +43,9 @@ def spawn_pair_export(number, PATH):
         mongo_container_name = mongo_container.name
 
         sleep(3)
+        #Copies the db to the new container. Silently fails if there is no db to restore
         output = mongo_container.exec_run('bash -c "cd /data && mongorestore --archive="db-dump" --nsFrom="dbaas_db.*" --nsTo="dbaas_db.*""')
-
+        #name generator
         generated_ms_name = 'new_ms_'+str(randint(0,999))
         image = client.images.build(path='/master_slave')
         slave_container = client.containers.run(image[0],
@@ -59,7 +60,7 @@ def spawn_pair_export(number, PATH):
         ids.append((mongo_container_id, slave_container.id))
 
     return ids
-
+#Spawn container
 def spawn_pair(number):
     ids = []
     for i in range(number):
@@ -96,6 +97,7 @@ def spawn_pair(number):
     return ids
 
 # TODO: Fix, not the correct way
+# Take down container
 def down_pair(number):
     ids = []
     for i in range(number):
@@ -140,16 +142,16 @@ def init_scale_watch():
         to_spawn = count // 20
 
         print(" [sw] to_spawn:", to_spawn, "newly_spawned_pairs:", newly_spawned_pairs)
-        delta = 2 + to_spawn - newly_spawned_pairs
+        delta = 2 + to_spawn - newly_spawned_pairs #two containers are spawned in first cycle
 
-        if(delta>0):
+        if(delta>0): #Scale up a pair
             new_list = spawn_pair(abs(delta))
             spawned_record.extend(new_list)
             print(" [sw] Spawned", delta, "containers with IDs", new_list) 
             # for pair in new_list:
             #     container = containers_col.find_one_and_update({"name": "default"}, {"$push": {"containers": {"mongo": pair[0], "slave": pair[1]}}}, upsert=True)
         
-        if(delta<0):
+        if(delta<0): #scale down a pair
             down_list = down_pair(abs(delta))
             print(" [sw] Downed", delta, "containers with IDs", down_list) 
             # for pair in down_list:

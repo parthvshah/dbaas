@@ -60,12 +60,12 @@ class WriteRpcClient(object):
     
     def call(self, request):
         self.response = None
-        self.corr_id = str(uuid.uuid4())
+        self.corr_id = str(uuid.uuid4()) #correlation ID
         self.channel.basic_publish(
             exchange='',
             routing_key='write_rpc',
             properties=pika.BasicProperties(
-                reply_to=self.callback_queue,
+                reply_to=self.callback_queue, #callback queue is the return
                 correlation_id=self.corr_id,
             ),
             body=request)

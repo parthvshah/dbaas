@@ -1,10 +1,10 @@
 version: '3.7'
 
 networks:
-  dbaas-network:
-   name: dbaas-network
+  dbaas-network: #Internal network to avoid issues with naming conventions.
+   name: dbaas-network 
 
-services:
+services: # Services are discoverable by their names. They connect to the dbaas-network
   rmq:
     container_name: rmq_host
     image: rabbitmq:3.8.3-alpine
@@ -22,13 +22,13 @@ services:
     build:
         context: ./orchestrator
         dockerfile: Dockerfile
-    command: sh -c "sleep 15 && chmod a+x run.sh && ./run.sh"
+    command: sh -c "sleep 15 && chmod a+x run.sh && ./run.sh" #Sleep is for zoo and rmq to init
     ports:
       - "80:80"
     volumes:
         - ./orchestrator:/app
         - ./master_slave:/master_slave
-        - "/var/run/docker.sock:/var/run/docker.sock"
+        - "/var/run/docker.sock:/var/run/docker.sock" #Access host docker engine
     privileged: true
     depends_on:
         - rmq
