@@ -23,6 +23,8 @@ services:
         context: ./orchestrator
         dockerfile: Dockerfile
     command: sh -c "sleep 15 && chmod a+x run.sh && ./run.sh"
+    environment:
+      - HOSTPWD=$PWD
     ports:
       - "80:80"
     volumes:
