@@ -68,8 +68,9 @@ if __name__ == "__main__":
         # For slave
         # TODO: Not doing anything, needs to spawn once slave crashes
         try:
-            children = zk.get_children("/slave")
-            print(" [z] Children are", children)
+            @zk.ChildrenWatch("/slave")
+            def watch_children(children):
+                spawn_pair_export(1, PATH)
             
         except:
             print(" [z] Children not available.")
