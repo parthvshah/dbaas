@@ -13,7 +13,7 @@ zk.start()
 # Docker setup
 client = docker.from_env()
 # TODO: Path
-PATH = '/home/ubuntu/Database-as-a-Service'
+PATH = os.getenv('HOSTPWD')
 
 def id_helper(myid):
     pid_arr = []
