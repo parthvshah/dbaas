@@ -9,7 +9,7 @@ from kazoo.client import KazooClient, KazooState
 
 client = docker.from_env()
 # TODO: Change
-PATH = '/home/ubuntu/Database-as-a-Service'
+# PATH = '/home/ubuntu/Database-as-a-Service'
 spawned_record = []
 newly_spawned_pairs = 0
 
@@ -33,7 +33,7 @@ def spawn_pair_export(number, PATH):
         generated_mongo_name = 'new_mongo_'+str(randint(0,999))
         mongo_container = client.containers.run('mongo',
                                             name=generated_mongo_name,
-                                            volumes={PATH+'/orchestrator': {'bind': '/data'}},
+                                            volumes={HOSTPWD+'/orchestrator': {'bind': '/data'}},
                                             network='dbaas-network',
                                             entrypoint='mongod --bind_ip_all',
                                             restart_policy={"Name": "on-failure", "MaximumRetryCount": 5},
@@ -50,7 +50,7 @@ def spawn_pair_export(number, PATH):
         image = client.images.build(path='/master_slave')
         slave_container = client.containers.run(image[0],
                                         name=generated_ms_name,
-                                        volumes={PATH+'/master_slave': {'bind': '/master_slave'}},
+                                        volumes={HOSTPWD+'/master_slave': {'bind': '/master_slave'}},
                                         network='dbaas-network',
                                         environment=['MONGO_NAME='+mongo_container_name],
                                         links={'rmq_host': 'rmq', mongo_container_name: 'mongo'},
@@ -67,7 +67,7 @@ def spawn_pair(number):
         generated_mongo_name = 'new_mongo_'+str(randint(0,999))
         mongo_container = client.containers.run('mongo',
                                             name=generated_mongo_name,
-                                            volumes={PATH+'/orchestrator': {'bind': '/data'}},
+                                            volumes={HOSTPWD+'/orchestrator': {'bind': '/data'}},
                                             network='dbaas-network',
                                             entrypoint='mongod --bind_ip_all',
                                             restart_policy={"Name": "on-failure", "MaximumRetryCount": 5},
@@ -83,7 +83,7 @@ def spawn_pair(number):
         image = client.images.build(path='/master_slave')
         slave_container = client.containers.run(image[0],
                                         name=generated_ms_name,
-                                        volumes={PATH+'/master_slave': {'bind': '/master_slave'}},
+                                        volumes={HOSTPWD+'/master_slave': {'bind': '/master_slave'}},
                                         network='dbaas-network',
                                         environment=['MONGO_NAME='+mongo_container_name],
                                         links={'rmq_host': 'rmq', mongo_container_name: 'mongo'},

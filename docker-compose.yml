@@ -23,6 +23,8 @@ services: # Services are discoverable by their names. They connect to the dbaas-
         context: ./orchestrator
         dockerfile: Dockerfile
     command: sh -c "sleep 15 && chmod a+x run.sh && ./run.sh" #Sleep is for zoo and rmq to init
+    environment:
+      - HOSTPWD=$PWD
     ports:
       - "80:80"
     volumes:
