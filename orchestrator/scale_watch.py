@@ -8,8 +8,7 @@ from kazoo.client import KazooClient, KazooState
 
 
 client = docker.from_env()
-# TODO: Change
-# PATH = '/home/ubuntu/Database-as-a-Service'
+PATH = os.getenv('HOSTPWD')
 spawned_record = []
 newly_spawned_pairs = 0
 
@@ -33,7 +32,7 @@ def spawn_pair_export(number, PATH):
         generated_mongo_name = 'new_mongo_'+str(randint(0,999))
         mongo_container = client.containers.run('mongo',
                                             name=generated_mongo_name,
-                                            volumes={HOSTPWD+'/orchestrator': {'bind': '/data'}},
+                                            volumes={PATH+'/orchestrator': {'bind': '/data'}},
                                             network='dbaas-network',
                                             entrypoint='mongod --bind_ip_all',
                                             restart_policy={"Name": "on-failure", "MaximumRetryCount": 5},
@@ -50,7 +49,7 @@ def spawn_pair_export(number, PATH):
         image = client.images.build(path='/master_slave')
         slave_container = client.containers.run(image[0],
                                         name=generated_ms_name,
-                                        volumes={HOSTPWD+'/master_slave': {'bind': '/master_slave'}},
+                                        volumes={PATH+'/master_slave': {'bind': '/master_slave'}},
                                         network='dbaas-network',
                                         environment=['MONGO_NAME='+mongo_container_name],
                                         links={'rmq_host': 'rmq', mongo_container_name: 'mongo'},
@@ -60,6 +59,7 @@ def spawn_pair_export(number, PATH):
         ids.append((mongo_container_id, slave_container.id))
 
     return ids
+
 #Spawn container
 def spawn_pair(number):
     ids = []
@@ -96,7 +96,6 @@ def spawn_pair(number):
     newly_spawned_pairs += number
     return ids
 
-# TODO: Fix, not the correct way
 # Take down container
 def down_pair(number):
     ids = []
@@ -132,8 +131,6 @@ def init_scale_watch():
             new_list = spawn_pair(2)
             spawned_record.extend(new_list)
             print(" [sw] Init spawn containers with IDs", new_list) 
-            # for pair in new_list:
-            #     container = containers_col.find_one_and_update({"name": "default"}, {"$push": {"containers": {"mongo": pair[0], "slave": pair[1]}}}, upsert=True)
             sleep(30)
         
         res = counts_col.find_one({"name": "default"})
@@ -148,15 +145,10 @@ def init_scale_watch():
             new_list = spawn_pair(abs(delta))
             spawned_record.extend(new_list)
             print(" [sw] Spawned", delta, "containers with IDs", new_list) 
-            # for pair in new_list:
-            #     container = containers_col.find_one_and_update({"name": "default"}, {"$push": {"containers": {"mongo": pair[0], "slave": pair[1]}}}, upsert=True)
         
         if(delta<0): #scale down a pair
             down_list = down_pair(abs(delta))
             print(" [sw] Downed", delta, "containers with IDs", down_list) 
-            # for pair in down_list:
-            #     container = containers_col.find_one_and_update({"name": "default"}, {"$pull": {"containers": {"mongo": pair[0], "slave": pair[1]}}})
-
 
         set_count = counts_col.find_one_and_update({"name": "default"}, {"$set": {"count": 0}})
 

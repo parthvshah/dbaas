@@ -12,7 +12,6 @@ zk.start()
 
 # Docker setup
 client = docker.from_env()
-# TODO: Path
 PATH = os.getenv('HOSTPWD')
 
 def id_helper(myid):
@@ -67,7 +66,6 @@ if __name__ == "__main__":
                 retry_count = 0
         
         # For slave
-        # TODO: Not doing anything, needs to spawn once slave crashes
         try:
             children = zk.get_children("/slave")
             print(" [z] Children are", children)

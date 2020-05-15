@@ -157,8 +157,6 @@ def crash_slave():
     stop_mongo_container.stop()
     print(" [o] Stopped mongo named:", str(stop_mongo_name))
 
-    # TODO: Don't just replace, let zoo do this
-    replace_ms()
     response = []
     return json.dumps(response), 200
 
