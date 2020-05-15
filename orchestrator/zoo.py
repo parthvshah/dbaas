@@ -3,6 +3,7 @@ from time import sleep
 import json
 import uuid
 import docker
+import os
 
 from scale_watch import spawn_pair_export
 
@@ -14,6 +15,10 @@ zk.start()
 client = docker.from_env()
 PATH = os.getenv('HOSTPWD')
 
+master_init_complete = False
+slave_init_complete = False
+slave_count = 0
+
 def id_helper(myid):
     pid_arr = []
     with open("PID.file",) as zFile:
@@ -23,7 +28,7 @@ def id_helper(myid):
                 if(myid in field):
                     return container[2]
 
-#Checks for master and slave every ten seconds
+# Checks for master and slave every ten seconds
 def conduct_election():
     print(" [z] Conducting election.")
 
@@ -36,20 +41,25 @@ def conduct_election():
     sorted_int_children = sorted(int_children)
     dec_pid = str(sorted_int_children[0])
 
-    zk.create("/election/master", dec_pid.encode('utf-8'), ephemeral=True, makepath=True)
+    sleep(10)
+    # zk.create("/election/master", dec_pid.encode('utf-8'), ephemeral=True, makepath=True)
     new_list = spawn_pair_export(1, PATH)
     print(" [z] Replaced master with ms containers with IDs", new_list)
 
 def replace_ms():
+    print(" [z] Replacing.")
     new_list = spawn_pair_export(1, PATH)
-    print(" [z] Replaced slave (crash) with ms containers with IDs", new_list)
+    print(" [z] Replaced slave with ms containers with IDs", new_list)
 
 
 if __name__ == "__main__":
     retry_count = 0
     retry_limit = 10
+    s_retry_count = 0
+    s_retry_limit = 10
+    s_prev = 0
     while True:
-        #retry count gives time to processes to spawn before election
+        # Retry count gives time for the worker containers to spawn before election
         # For master
         try:
             data, stat = zk.get("/election/master")
@@ -59,7 +69,7 @@ if __name__ == "__main__":
             retry_limit = 2
         except:
             retry_count += 1
-            print(" [z] Retrying. Count", retry_count)
+            print(" [z] Master not available. Retry count", retry_count)
 
             if(retry_count==retry_limit):
                 conduct_election()
@@ -68,9 +78,22 @@ if __name__ == "__main__":
         # For slave
         try:
             children = zk.get_children("/slave")
-            print(" [z] Children are", children)
+            print(" [z] Slaves are", children)
+            s_retry_count = 0
+            s_retry_limit = 2
+
+            if(len(children) < s_prev):
+                replace_ms()
+            else:
+                s_prev = len(children)
+
             
         except:
-            print(" [z] Children not available.")
+            s_retry_count += 1
+            print(" [z] Slave(s) not available. Retry count", s_retry_count)
+
+            # if(s_retry_count==s_retry_limit):
+            #     replace_ms()
+            #     s_retry_count = 0
 
         sleep(10)

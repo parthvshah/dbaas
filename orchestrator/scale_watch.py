@@ -3,12 +3,13 @@ from time import sleep
 from pymongo import MongoClient
 import json
 from random import randint
+import os
 
 from kazoo.client import KazooClient, KazooState
 
-
 client = docker.from_env()
-PATH = os.getenv('HOSTPWD')
+HOSTPWD = os.getenv('HOSTPWD')
+print(" [sw] PATH:", HOSTPWD)
 spawned_record = []
 newly_spawned_pairs = 0
 
@@ -154,13 +155,13 @@ def init_scale_watch():
 
         sleep(2*60)
 
-@zk.ChildrenWatch("/master")
-def watch_master(children):
-    print(" [sw] Master is: %s" % children)
+# @zk.ChildrenWatch("/master")
+# def watch_master(children):
+#     print(" [sw] Master is: %s" % children)
 
-@zk.ChildrenWatch("/slave")
-def watch_slaves(children):
-    print(" [sw] Slave(s) are: %s" % children)
+# @zk.ChildrenWatch("/slave")
+# def watch_slaves(children):
+#     print(" [sw] Slave(s) are: %s" % children)
 
 if __name__ == "__main__":
     init_scale_watch()

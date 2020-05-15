@@ -29,7 +29,7 @@ zk.start()
 import docker
 client = docker.from_env()
 
-from zoo import replace_ms
+# from zoo import replace_ms
 
 def pid_helper(myid):
     pid_arr = []
@@ -124,11 +124,20 @@ def worker_list():
 @app.route('/api/v1/crash/master', methods = ['POST'])
 def crash_master():
     data, stat = zk.get("/election/master")
-    master_name = pid_helper(data.decode('utf-8'))
+    stop_pid = data.decode('utf-8')
+    master_name = pid_helper(stop_pid)
     master_container = client.containers.get(master_name)
     master_container.stop()
 
-    print(" [o] Master Stopped;", str(master_name))
+    print(" [o] Master Stopped:", str(master_name))
+
+    data, stat = zk.get("/master/"+str(stop_pid))
+    stop_mongo_name = pid_helper(data.decode('utf-8'))
+
+    stop_mongo_container = client.containers.get(stop_mongo_name)
+    stop_mongo_container.stop()
+    print(" [o] Stopped mongo named:", str(stop_mongo_name))
+
     response = []
     return json.dumps(response), 200
 
